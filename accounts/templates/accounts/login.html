@@ -128,7 +128,13 @@
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('login-btn');
-            const phone = document.getElementById('phone').value;
+            let phone = document.getElementById('phone').value.trim().replace(/\s+/g, '');
+            if (!phone.startsWith('+225') && phone.length === 10) {
+                phone = '+225' + phone;
+            } else if (!phone.startsWith('+')) {
+                phone = '+' + phone;
+            }
+
             const password = document.getElementById('password').value;
             const errBox = document.getElementById('error-box');
 

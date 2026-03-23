@@ -165,8 +165,15 @@
             const btn = document.getElementById('signup-btn');
             const errBox = document.getElementById('error-box');
 
+            let phone = document.getElementById('phone').value.trim().replace(/\s+/g, '');
+            if (!phone.startsWith('+225') && phone.length === 10) {
+                phone = '+225' + phone;
+            } else if (!phone.startsWith('+')) {
+                phone = '+' + phone;
+            }
+
             const payload = {
-                phone_number: document.getElementById('phone').value,
+                phone_number: phone,
                 password: document.getElementById('password').value,
                 first_name: document.getElementById('first_name').value,
                 last_name: document.getElementById('last_name').value,
@@ -182,7 +189,10 @@
             try {
                 const response = await fetch('/api/register/', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
                     body: JSON.stringify(payload)
                 });
 
