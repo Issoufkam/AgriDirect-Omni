@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S'inscrire | AgriDirect-CIV</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    
+    <style>
+        :root {
+            --primary: #00E676;
+            --bg: #0F172A;
+            --card: #1E293B;
+            --text: #F8FAFC;
+            --muted: #94A3B8;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            padding: 40px 0;
+        }
+
+        .auth-card {
+            background: var(--card);
+            border-radius: 32px;
+            padding: 40px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo { font-family: 'Outfit'; font-size: 28px; color: var(--primary); text-align: center; margin-bottom: 24px; }
+        h1 { font-family: 'Outfit'; font-size: 24px; margin-bottom: 8px; text-align: center; }
+        p.subtitle { color: var(--muted); margin-bottom: 24px; text-align: center; }
+
+        /* Role Tabs */
+        .role-selector { display: flex; gap: 8px; margin-bottom: 24px; background: #0f172a; padding: 6px; border-radius: 12px; }
+        .role-tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); transition: 0.2s; }
+        .role-tab.active { background: var(--primary); color: #000; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .input-group { margin-bottom: 16px; }
+        label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted); }
+        
+        input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #1e293b; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:active { transform: scale(0.98); }
+
+        .footer-links { text-align: center; margin-top: 24px; font-size: 13px; color: var(--muted); }
+        .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; }
+        
+        .error-msg { background: #ef444422; color: #ef4444; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="auth-card">
+        <div class="logo">AgriDirect<span style="color:white">.CIV</span></div>
+        <h1>Créer un compte</h1>
+        <p class="subtitle">Rejoignez le circuit court ivoirien.</p>
+
+        <div class="role-selector">
+            <div class="role-tab active" data-role="CLIENT">Client</div>
+            <div class="role-tab" data-role="PRODUCTEUR">Producteur</div>
+            <div class="role-tab" data-role="LIVREUR">Livreur</div>
+        </div>
+
+        <div id="error-box" class="error-msg"></div>
+
+        <form id="signup-form">
+            <div class="grid">
+                <div class="input-group">
+                    <label>Prénom</label>
+                    <input type="text" id="first_name" placeholder="Ange" required>
+                </div>
+                <div class="input-group">
+                    <label>Nom de famille</label>
+                    <input type="text" id="last_name" placeholder="Koffi" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Numéro de téléphone</label>
+                <input type="text" id="phone" placeholder="+225 01 02 03 04 05" value="+225" required>
+            </div>
+
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" id="password" placeholder="Min. 8 caractères" required>
+            </div>
+
+            <div style="font-size: 12px; color: var(--muted); display: flex; align-items: flex-start; gap: 8px;">
+                <ion-icon name="location" style="color: var(--primary); font-size: 16px; flex-shrink: 0;"></ion-icon>
+                En vous inscrivant, vous acceptez de partager votre localisation GPS pour les livraisons et calculs de frais.
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="signup-btn">C'est parti !</button>
+        </form>
+
+        <div class="footer-links">
+            Vous avez déjà un compte ? <a href="/login/">Connectez-vous</a>
+        </div>
+    </div>
+
+    <script>
+        let selectedRole = "CLIENT";
+        let userLocation = { lat: 5.309, lng: -4.012 }; // Default: Abidjan
+
+        // Role Tabs
+        const tabs = document.querySelectorAll('.role-tab');
+        tabs.forEach(t => {
+            t.addEventListener('click', () => {
+                tabs.forEach(x => x.classList.remove('active'));
+                t.classList.add('active');
+                selectedRole = t.dataset.role;
+            });
+        });
+
+        // Get GPS
+        navigator.geolocation.getCurrentPosition((pos) => {
+            userLocation.lat = pos.coords.latitude;
+            userLocation.lng = pos.coords.longitude;
+        }, (err) => console.log("GPS Refusé:", err));
+
+        // Submit
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('signup-btn');
+            const errBox = document.getElementById('error-box');
+
+            const payload = {
+                phone_number: document.getElementById('phone').value,
+                password: document.getElementById('password').value,
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                role: selectedRole,
+                current_location_lat: userLocation.lat,
+                current_location_lng: userLocation.lng
+            };
+
+            btn.disabled = true;
+            btn.innerText = "Création du compte...";
+            errBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/register/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.status === 201) {
+                    alert("Compte créé avec succès ! Veuillez vous connecter.");
+                    window.location.href = "/login/";
+                } else {
+                    errBox.innerText = Object.values(data).flat().join(", ") || "Une erreur est survenue lors de l'inscription.";
+                    errBox.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errBox.innerText = "Une erreur est survenue.";
+                errBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "C'est parti !";
+            }
+        });
+    </script>
+</body>
+</html>

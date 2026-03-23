@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | AgriDirect-CIV</title>
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    
+    <style>
+        :root {
+            --primary: #00E676;
+            --bg: #0F172A;
+            --card: #1E293B;
+            --text: #F8FAFC;
+            --muted: #94A3B8;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Abstract Background */
+        .dots { position: absolute; width: 100%; height: 100%; background-image: radial-gradient(var(--card) 1px, transparent 1px); background-size: 30px 30px; opacity: 0.3; z-index: -1; }
+
+        .auth-card {
+            background: var(--card);
+            border-radius: 32px;
+            padding: 48px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo { font-family: 'Outfit'; font-size: 32px; color: var(--primary); text-align: center; margin-bottom: 40px; }
+        h1 { font-family: 'Outfit'; font-size: 24px; margin-bottom: 8px; }
+        p.subtitle { color: var(--muted); margin-bottom: 32px; }
+
+        .input-group { margin-bottom: 24px; }
+        label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--muted); }
+        .input-wrapper { position: relative; }
+        .input-wrapper ion-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 20px; }
+        
+        input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px 14px 14px 48px;
+            color: white;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #1e293b; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:hover { background: #00c853; transform: scale(1.02); }
+
+        .error-msg { background: #ef444422; color: #ef4444; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; display: none; }
+
+        .footer-links { text-align: center; margin-top: 32px; font-size: 14px; color: var(--muted); }
+        .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+    </style>
+</head>
+<body>
+
+    <div class="dots"></div>
+
+    <div class="auth-card">
+        <div class="logo">AgriDirect<span style="color:white">.CIV</span></div>
+        <h1>Content de vous revoir !</h1>
+        <p class="subtitle">Connectez-vous pour gérer vos commandes.</p>
+
+        <div id="error-box" class="error-msg">Identifiants incorrects.</div>
+
+        <form id="login-form">
+            <div class="input-group">
+                <label>Numéro de téléphone</label>
+                <div class="input-wrapper">
+                    <ion-icon name="phone-portrait-outline"></ion-icon>
+                    <input type="text" id="phone" placeholder="+225 01 02 03 04 05" value="+225">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <div class="input-wrapper">
+                    <ion-icon name="lock-closed-outline"></ion-icon>
+                    <input type="password" id="password" placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="login-btn">Se connecter</button>
+        </form>
+
+        <div class="footer-links">
+            Vous n'avez pas de compte ? <a href="/signup/">Inscrivez-vous ici</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('login-btn');
+            const phone = document.getElementById('phone').value;
+            const password = document.getElementById('password').value;
+            const errBox = document.getElementById('error-box');
+
+            btn.disabled = true;
+            btn.innerText = "Connexion...";
+            errBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/login/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: phone, password: password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store tokens
+                    localStorage.setItem('agri_access', data.access);
+                    localStorage.setItem('agri_refresh', data.refresh);
+                    
+                    // Fetch profile to know role
+                    const profileRes = await fetch('/api/profile/', {
+                        headers: { 'Authorization': `Bearer ${data.access}` }
+                    });
+                    const profile = await profileRes.json();
+                    localStorage.setItem('agri_user', JSON.stringify(profile));
+
+                    // Success! Redirect to marketplace
+                    window.location.href = "/marketplace/";
+                } else {
+                    errBox.innerText = data.detail || "Le numéro ou le mot de passe est incorrect.";
+                    errBox.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errBox.innerText = "Une erreur est survenue.";
+                errBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Se connecter";
+            }
+        });
+
+        // Auto-check if already logged in
+        if (localStorage.getItem('agri_access')) {
+            window.location.href = "/marketplace/";
+        }
+    </script>
+</body>
+</html>

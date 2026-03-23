@@ -35,6 +35,7 @@ urlpatterns = [
     path("", include("products.urls")),
     path("", include("deliveries.urls")),
     path("", include("orders.urls")),
+    path("", include("accounts.urls")),
     
     # ── Page d'accueil ──
     path("", RedirectView.as_view(url='/marketplace/'), name='root-redirect'),

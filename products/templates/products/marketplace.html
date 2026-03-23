@@ -405,8 +405,10 @@
                 <ion-icon name="cart-outline"></ion-icon>
                 <div class="cart-count" id="cart-counter">0</div>
             </button>
-            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items:center; justify-content: center;">
-                <ion-icon name="person-outline"></ion-icon>
+            <div id="auth-section" style="display: flex; gap: 12px; align-items: center;">
+                <!-- Dynamically filled by JS -->
+                <a href="/login/" class="btn-auth" style="text-decoration: none; color: var(--text-main); font-weight: 600; font-size: 14px;">Connexion</a>
+                <a href="/signup/" class="btn-signup" style="text-decoration: none; background: var(--primary); color: #000; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 14px;">S'inscrire</a>
             </div>
         </div>
     </nav>
@@ -431,6 +433,20 @@
                     </li>
                     <li class="category-item" onclick="filterCategory('HALIEUTIQUE', this)">
                         <ion-icon name="fish-outline"></ion-icon> Halieutiques
+                    </li>
+                </ul>
+            </div>
+
+            <div class="filter-section" id="account-sidebar" style="display: none;">
+                <div class="filter-title">
+                    <ion-icon name="person-circle-outline"></ion-icon> Mon Espace
+                </div>
+                <ul class="category-list">
+                    <li class="category-item" onclick="window.location.href='/mes-commandes/'">
+                        <ion-icon name="receipt-outline"></ion-icon> Mes Commandes
+                    </li>
+                    <li class="category-item" onclick="logout()" style="color: var(--accent);">
+                        <ion-icon name="log-out-outline"></ion-icon> Déconnexion
                     </li>
                 </ul>
             </div>
@@ -478,14 +494,13 @@
         </div>
         <div class="cart-items" id="cart-container">
             <!-- Items injected here -->
-            <p style="text-align:center; margin-top: 50px; color: var(--text-muted);">Votre panier est vide.</p>
         </div>
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total</span>
                 <span id="cart-total-val">0 FCFA</span>
             </div>
-            <button class="checkout-btn" onclick="checkout()">Confirmer la commande</button>
+            <button class="checkout-btn" id="checkout-btn" onclick="checkout()">Confirmer la commande</button>
         </div>
     </div>
 
@@ -494,6 +509,52 @@
         let cart = [];
         let userLocation = null;
         let currentCategory = null;
+
+        // Auth management
+        function updateAuthUI() {
+            const agriUser = localStorage.getItem('agri_user');
+            const authSection = document.getElementById('auth-section');
+            const accountSidebar = document.getElementById('account-sidebar');
+
+            if (agriUser) {
+                const user = JSON.parse(agriUser);
+                authSection.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="window.location.href='/mes-commandes/'">
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-main);">${user.first_name}</span>
+                        <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items:center; justify-content: center;">
+                            <ion-icon name="person-outline"></ion-icon>
+                        </div>
+                    </div>
+                `;
+                accountSidebar.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('agri_access');
+            localStorage.removeItem('agri_refresh');
+            localStorage.removeItem('agri_user');
+            window.location.reload();
+        }
+
+        // Wrapper for authenticated fetch
+        async function authFetch(url, options = {}) {
+            const token = localStorage.getItem('agri_access');
+            if (token) {
+                options.headers = {
+                    ...options.headers,
+                    'Authorization': `Bearer ${token}`
+                };
+            }
+            
+            let response = await fetch(url, options);
+            
+            if (response.status === 401 && localStorage.getItem('agri_refresh')) {
+                // Potential token refresh logic here
+                logout(); 
+            }
+            return response;
+        }
 
         // Initial Fetch
         async function fetchProducts() {
@@ -524,19 +585,18 @@
             container.innerHTML = '';
 
             products.forEach(p => {
-                // Determine image (placeholder for now)
                 const imgUrl = p.product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
                 
                 container.innerHTML += `
                     <div class="product-card">
-                        <div class="stock-badge">${p.remaining_quantity} ${p.product.unit} dispos</div>
+                        <div class="stock-badge">${Number(p.remaining_quantity)} ${p.product.unit} dispos</div>
                         <img src="${imgUrl}" class="product-img" alt="${p.product.name}">
                         <div class="product-info">
                             <div class="product-cat">${p.product.category_display}</div>
                             <div class="product-name">${p.product.name}</div>
                             <div style="font-size: 13px; color: var(--text-muted); display:flex; align-items:center; gap:4px; margin-bottom: 4px;">
                                 <ion-icon name="location-outline"></ion-icon> ${p.producer.full_name}
-                                <span style="margin-left:auto; color: var(--warning); font-weight: 700;">★ ${p.producer.average_rating || 'Nouveau'}</span>
+                                <span style="margin-left:auto; color: #F59E0B; font-weight: 700;">★ ${p.producer.average_rating || 'Nouveau'}</span>
                             </div>
                             <div class="product-meta">
                                 <div class="product-price">
@@ -597,7 +657,7 @@
                         <img src="${item.product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=100'}" class="cart-item-img">
                         <div class="cart-item-info">
                             <div class="cart-item-name">${item.product.name}</div>
-                            <div class="cart-item-price">${item.cartQuantity} x ${item.product.unit_price} FCFA</div>
+                            <div class="cart-item-price">${item.cartQuantity} x ${Number(item.product.unit_price).toLocaleString()} FCFA</div>
                         </div>
                         <button onclick="removeFromCart(${item.id})" style="background:none; border:none; color: var(--accent); cursor:pointer;"><ion-icon name="trash-outline"></ion-icon></button>
                     </div>
@@ -634,19 +694,23 @@
         async function checkout() {
             if (cart.length === 0) return;
             
-            const firstItem = cart[0]; // Pour le prototype on prend le 1er item
-            
-            const confirmOrder = confirm(`Confirmer la commande de ${firstItem.cartQuantity} ${firstItem.product.unit} de ${firstItem.product.name} ?`);
-            if (!confirmOrder) return;
+            // SECURITY CHECK: Must be logged in
+            if (!localStorage.getItem('agri_access')) {
+                alert("Veuillez vous connecter pour passer commande.");
+                window.location.href = "/login/";
+                return;
+            }
 
+            const btn = document.getElementById('checkout-btn');
+            btn.disabled = true;
+            btn.innerText = "Traitement...";
+
+            const firstItem = cart[0]; 
+            
             try {
-                // Création de la commande
-                const response = await fetch('/api/orders/', {
+                const response = await authFetch('/api/orders/', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         stock_id: firstItem.id,
                         quantity: firstItem.cartQuantity,
@@ -658,15 +722,11 @@
 
                 const order = await response.json();
                 if (response.status === 201) {
-                    alert(`Commande #${order.id} créée ! Redirection vers le paiement Wave...`);
+                    alert(`Commande #${order.id} créée ! Redirection vers le paiement...`);
                     
-                    // Initialisation du paiement
-                    const payResponse = await fetch(`/api/payments/orders/${order.id}/pay/`, {
+                    const payResponse = await authFetch(`/api/payments/orders/${order.id}/pay/`, {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCookie('csrftoken')
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ provider: "WAVE" })
                     });
                     
@@ -675,28 +735,20 @@
                         window.location.href = payData.payment_url;
                     }
                 } else {
-                    alert("Erreur: " + (order.detail || "Vérifiez que vous êtes connecté en tant que CLIENT."));
+                    alert("Erreur: " + (order.detail || "Vérifiez vos informations."));
                 }
             } catch (err) { console.error(err); }
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
+            finally {
+                btn.disabled = false;
+                btn.innerText = "Confirmer la commande";
             }
-            return cookieValue;
         }
 
         // Init
-        window.addEventListener('DOMContentLoaded', fetchProducts);
+        window.addEventListener('DOMContentLoaded', () => {
+            updateAuthUI();
+            fetchProducts();
+        });
 
     </script>
 </body>
