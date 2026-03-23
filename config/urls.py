@@ -15,6 +15,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from django.views.generic import RedirectView
 
 urlpatterns = [
     # ── Admin ──
@@ -34,6 +35,10 @@ urlpatterns = [
     path("", include("products.urls")),
     path("", include("deliveries.urls")),
     path("", include("orders.urls")),
+    
+    # ── Page d'accueil ──
+    path("", RedirectView.as_view(url='/marketplace/'), name='root-redirect'),
+    
     # ── API Documentation ──
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

@@ -31,6 +31,25 @@ class Command(BaseCommand):
         producers = []
         drivers = []
 
+        # 0. Création d'un Administrateur par défaut
+        self.stdout.write("Vérification de l'administrateur par défaut...")
+        admin_user, created = CustomUser.objects.get_or_create(
+            phone_number="+2250102030405",
+            defaults={
+                "first_name": "Admin",
+                "last_name": "AgriDirect",
+                "role": CustomUser.Role.CLIENT, # Rôle de base, mais is_staff=True ci-après
+                "is_staff": True,
+                "is_superuser": True,
+            }
+        )
+        if created:
+            admin_user.set_password("password123")
+            admin_user.save()
+            self.stdout.write(self.style.SUCCESS("Administrateur créé : +2250102030405 / password123"))
+        else:
+            self.stdout.write("L'administrateur existe déjà.")
+
         # 10 Clients
         for i in range(10):
             user = CustomUser.objects.create_user(
