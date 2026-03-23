@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace | AgriDirect-CIV</title>
+    <!-- Google Fonts: Inter & Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <style>
+        :root {
+            --primary: #00E676; /* Green */
+            --primary-dark: #00C853;
+            --secondary: #00B0FF; /* Blue */
+            --accent: #FF3D00; /* Orange/Red */
+            --bg-body: #F8FAFC;
+            --bg-card: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --header-height: 80px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .brand {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Navbar */
+        .navbar {
+            height: var(--header-height);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand ion-icon {
+            color: var(--primary);
+            font-size: 30px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .cart-trigger {
+            position: relative;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 28px;
+            color: var(--text-main);
+            transition: transform 0.2s;
+        }
+
+        .cart-trigger:hover { transform: scale(1.1); }
+
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--accent);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+        }
+
+        /* Page Layout */
+        .main-container {
+            margin-top: calc(var(--header-height) + 40px);
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+            padding: 0 5% 80px 5%;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+        }
+
+        .filter-section { margin-bottom: 32px; }
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-list { list-style: none; }
+        .category-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-item:hover, .category-item.active {
+            background: #F1F5F9;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        /* Product Grid */
+        .marketplace-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        /* Product Card */
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-img {
+            width: 100%;
+            height: 200px;
+            background: #cbd5e1;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product-info { padding: 20px; }
+        
+        .product-cat {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--secondary);
+            margin-bottom: 4px;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .product-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 16px;
+        }
+
+        .product-price {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-val {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            font-family: 'Outfit';
+        }
+
+        .price-unit {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .add-cart-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            transition: all 0.2s;
+        }
+
+        .add-cart-btn:hover {
+            background: var(--secondary);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .stock-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Cart Drawer */
+        .cart-drawer {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 400px;
+            height: 100%;
+            background: white;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            z-index: 2000;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-drawer.open { right: 0; }
+
+        .cart-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .cart-item-img { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
+        .cart-item-info { flex: 1; }
+        .cart-item-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+        .cart-item-price { font-size: 14px; color: var(--text-muted); }
+
+        .cart-footer {
+            padding: 30px;
+            background: #F8FAFC;
+            border-top: 1px solid var(--border);
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            font-family: 'Outfit';
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: var(--text-main);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkout-btn:hover { background: #000; }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1500;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay.active { display: block; }
+
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(0, 230, 118, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <!-- Header -->
+    <nav class="navbar">
+        <a href="/" class="brand">
+            <ion-icon name="leaf"></ion-icon>
+            <span>AgriDirect Marketplace</span>
+        </a>
+        <div class="nav-actions">
+            <button class="cart-trigger" onclick="toggleCart()">
+                <ion-icon name="cart-outline"></ion-icon>
+                <div class="cart-count" id="cart-counter">0</div>
+            </button>
+            <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items:center; justify-content: center;">
+                <ion-icon name="person-outline"></ion-icon>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="filter-section">
+                <div class="filter-title">
+                    <ion-icon name="filter-outline"></ion-icon> Catégories
+                </div>
+                <ul class="category-list">
+                    <li class="category-item active" onclick="filterCategory(null, this)">
+                        <ion-icon name="grid-outline"></ion-icon> Tout voir
+                    </li>
+                    <li class="category-item" onclick="filterCategory('VIVRIER', this)">
+                        <ion-icon name="leaf-outline"></ion-icon> Vivriers
+                    </li>
+                    <li class="category-item" onclick="filterCategory('CARNE', this)">
+                        <ion-icon name="nutrition-outline"></ion-icon> Carnés
+                    </li>
+                    <li class="category-item" onclick="filterCategory('HALIEUTIQUE', this)">
+                        <ion-icon name="fish-outline"></ion-icon> Halieutiques
+                    </li>
+                </ul>
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-title">
+                    <ion-icon name="location-outline"></ion-icon> Votre Position
+                </div>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+                    Optimisez la livraison en activant le GPS.
+                </p>
+                <button onclick="requestLocation()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--primary); background: none; color: var(--primary-dark); font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <ion-icon name="locate"></ion-icon> Localiser
+                </button>
+            </div>
+        </aside>
+
+        <!-- Product List -->
+        <div class="marketplace-content">
+            <div class="grid-header">
+                <div>
+                    <h2 id="current-category">Tous les produits</h2>
+                    <p style="font-size: 14px; color: var(--text-muted);" id="result-count">Chargement...</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <select style="padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border);">
+                        <option>Trier par proximité</option>
+                        <option>Prix croissant</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="products-grid" id="products-container">
+                <!-- Cards will be injected by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Drawer -->
+    <div class="overlay" onclick="toggleCart()"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h3>Votre Panier</h3>
+            <button onclick="toggleCart()" style="background:none; border:none; font-size: 24px; cursor:pointer;"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+        <div class="cart-items" id="cart-container">
+            <!-- Items injected here -->
+            <p style="text-align:center; margin-top: 50px; color: var(--text-muted);">Votre panier est vide.</p>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cart-total-val">0 FCFA</span>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">Confirmer la commande</button>
+        </div>
+    </div>
+
+    <script>
+        let products = [];
+        let cart = [];
+        let userLocation = null;
+        let currentCategory = null;
+
+        // Initial Fetch
+        async function fetchProducts() {
+            try {
+                let url = '/api/marketplace/';
+                let params = [];
+                if (currentCategory) params.push(`category=${currentCategory}`);
+                if (userLocation) params.push(`lat=${userLocation.lat}&lng=${userLocation.lng}`);
+                
+                if (params.length > 0) url += '?' + params.join('&');
+
+                const response = await fetch(url);
+                const data = await response.json();
+                products = data.results;
+                
+                document.getElementById('result-count').innerText = `${products.length} produits disponibles`;
+                renderProducts();
+            } catch (err) {
+                console.error("Marketplace error:", err);
+            } finally {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+
+            products.forEach(p => {
+                // Determine image (placeholder for now)
+                const imgUrl = p.product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400';
+                
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div class="stock-badge">${p.remaining_quantity} ${p.product.unit} dispos</div>
+                        <img src="${imgUrl}" class="product-img" alt="${p.product.name}">
+                        <div class="product-info">
+                            <div class="product-cat">${p.product.category_display}</div>
+                            <div class="product-name">${p.product.name}</div>
+                            <div style="font-size: 13px; color: var(--text-muted); display:flex; align-items:center; gap:4px; margin-bottom: 4px;">
+                                <ion-icon name="location-outline"></ion-icon> ${p.producer.full_name}
+                                <span style="margin-left:auto; color: var(--warning); font-weight: 700;">★ ${p.producer.average_rating || 'Nouveau'}</span>
+                            </div>
+                            <div class="product-meta">
+                                <div class="product-price">
+                                    ${p.product.unit_price < p.product.original_price ? `<span style="text-decoration: line-through; color: var(--text-muted); font-size: 14px;">${Number(p.product.original_price).toLocaleString()} F</span>` : ''}
+                                    <span class="price-val">${Number(p.product.unit_price).toLocaleString()} FCFA</span>
+                                    <span class="price-unit">par ${p.product.unit}</span>
+                                </div>
+                                <button class="add-cart-btn" onclick="addToCart(${p.id})">
+                                    <ion-icon name="add"></ion-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Cart Logic
+        function toggleCart() {
+            document.getElementById('cart-drawer').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('active');
+        }
+
+        function addToCart(stockId) {
+            const stock = products.find(p => p.id === stockId);
+            if (!stock) return;
+
+            const existing = cart.find(item => item.id === stockId);
+            if (existing) {
+                existing.cartQuantity++;
+            } else {
+                cart.push({ ...stock, cartQuantity: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-container');
+            const counter = document.getElementById('cart-counter');
+            const totalVal = document.getElementById('cart-total-val');
+
+            counter.innerText = cart.length;
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align:center; margin-top: 50px; color: var(--text-muted);">Votre panier est vide.</p>';
+                totalVal.innerText = '0 FCFA';
+                return;
+            }
+
+            container.innerHTML = '';
+            let total = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.product.unit_price * item.cartQuantity;
+                total += itemTotal;
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=100'}" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.product.name}</div>
+                            <div class="cart-item-price">${item.cartQuantity} x ${item.product.unit_price} FCFA</div>
+                        </div>
+                        <button onclick="removeFromCart(${item.id})" style="background:none; border:none; color: var(--accent); cursor:pointer;"><ion-icon name="trash-outline"></ion-icon></button>
+                    </div>
+                `;
+            });
+
+            totalVal.innerText = total.toLocaleString() + ' FCFA';
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        // Filtering
+        function filterCategory(cat, btn) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('current-category').innerText = cat ? btn.innerText.trim() : "Tous les produits";
+            fetchProducts();
+        }
+
+        function requestLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    alert("Localisation activée ! Les produits seront triés par proximité.");
+                    fetchProducts();
+                });
+            }
+        }
+
+        async function checkout() {
+            if (cart.length === 0) return;
+            
+            const firstItem = cart[0]; // Pour le prototype on prend le 1er item
+            
+            const confirmOrder = confirm(`Confirmer la commande de ${firstItem.cartQuantity} ${firstItem.product.unit} de ${firstItem.product.name} ?`);
+            if (!confirmOrder) return;
+
+            try {
+                // Création de la commande
+                const response = await fetch('/api/orders/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        stock_id: firstItem.id,
+                        quantity: firstItem.cartQuantity,
+                        delivery_address: "Abidjan, Cocody (Simulé)",
+                        client_lat: userLocation ? userLocation.lat : 5.3484,
+                        client_lng: userLocation ? userLocation.lng : -3.9830
+                    })
+                });
+
+                const order = await response.json();
+                if (response.status === 201) {
+                    alert(`Commande #${order.id} créée ! Redirection vers le paiement Wave...`);
+                    
+                    // Initialisation du paiement
+                    const payResponse = await fetch(`/api/payments/orders/${order.id}/pay/`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ provider: "WAVE" })
+                    });
+                    
+                    const payData = await payResponse.json();
+                    if (payData.success) {
+                        window.location.href = payData.payment_url;
+                    }
+                } else {
+                    alert("Erreur: " + (order.detail || "Vérifiez que vous êtes connecté en tant que CLIENT."));
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', fetchProducts);
+
+    </script>
+</body>
+</html>

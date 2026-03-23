@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriDirect-CIV | Tableau de Bord Central</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet GPS Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <style>
+        :root {
+            /* Colors - Pure Dark Premium Theme */
+            --bg-dark: #0A0C10;
+            --bg-panel: #13171F;
+            --bg-panel-hover: #191E28;
+            --primary: #00E676; /* Vivid Green for Agri */
+            --primary-glow: rgba(0, 230, 118, 0.2);
+            --secondary: #00B0FF;
+            --accent: #FF3D00;
+            --text-main: #FFFFFF;
+            --text-muted: #8B949E;
+            --border: #21262D;
+            --success: #2EA043;
+            --warning: #D29922;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 48px;
+            color: var(--text-main);
+            text-decoration: none;
+        }
+
+        .brand ion-icon {
+            color: var(--primary);
+            font-size: 32px;
+            filter: drop-shadow(0 0 8px var(--primary-glow));
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link ion-icon {
+            font-size: 22px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background-color: var(--primary-glow);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(46, 160, 67, 0.1);
+            color: var(--success);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(46, 160, 67, 0.3);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(46, 160, 67, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 160, 67, 0); }
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .kpi-card:hover::before {
+            opacity: 1;
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .icon-green { background: rgba(0, 230, 118, 0.1); color: var(--primary); }
+        .icon-blue { background: rgba(0, 176, 255, 0.1); color: var(--secondary); }
+        .icon-orange { background: rgba(255, 61, 0, 0.1); color: var(--accent); }
+        .icon-purple { background: rgba(156, 39, 176, 0.1); color: #E040FB; }
+
+        .kpi-value {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .kpi-unit {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .chart-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .chart-header {
+            margin-bottom: 24px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Utility grid for smaller stats */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .detail-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Loading Overlay */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 230, 118, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 80px; padding: 24px 12px; }
+            .sidebar .brand span, .sidebar .nav-link span { display: none; }
+            .sidebar .brand { justify-content: center; }
+            .nav-link { justify-content: center; padding: 14px 0; }
+            .main-content { margin-left: 80px; padding: 24px; }
+        }
+
+        /* Map Styles */
+        #logistics-map {
+            height: 500px;
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            z-index: 10;
+        }
+
+        .map-legend {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Finance Tables */
+        .finance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+
+        .finance-table th {
+            text-align: left;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .finance-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .badge-escrow { background: rgba(0, 176, 255, 0.1); color: var(--secondary); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+        .badge-released { background: rgba(0, 230, 118, 0.1); color: var(--primary); padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+
+        /* Cookie Banner */
+        #cookie-banner {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-panel);
+            border: 1px solid var(--primary);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            z-index: 10000;
+            max-width: 320px;
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* User Filter Styling */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .filter-btn {
+            background: var(--bg-panel-hover);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: var(--secondary);
+            color: #000;
+            border-color: var(--secondary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Initial Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Cookie Consent -->
+    <div id="cookie-banner">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <ion-icon name="shield-checkmark" style="font-size: 24px; color: var(--primary);"></ion-icon>
+            <h4 style="font-size: 16px;">Données & Cookies</h4>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+            AgriDirect utilise des cookies de tracking pour optimiser vos flux logistiques et améliorer l'expérience des producteurs en milieu rural.
+        </p>
+        <button onclick="acceptCookies()" style="width: 100%; background: var(--primary); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            D'accord, j'accepte
+        </button>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="#" class="brand">
+            <ion-icon name="leaf"></ion-icon>
+            <span>AgriDirect</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link active" data-target="overview"><ion-icon name="grid"></ion-icon><span>Overview</span></a></li>
+            <li><a href="#" class="nav-link" data-target="utilisateurs"><ion-icon name="people"></ion-icon><span>Utilisateurs</span></a></li>
+            <li><a href="#" class="nav-link" data-target="commandes"><ion-icon name="cart"></ion-icon><span>Commandes</span></a></li>
+            <li><a href="#" class="nav-link" data-target="logistique"><ion-icon name="bicycle"></ion-icon><span>Logistique</span></a></li>
+            <li><a href="#" class="nav-link" data-target="finances"><ion-icon name="cash"></ion-icon><span>Finances</span></a></li>
+            <li><a href="#" class="nav-link" data-target="analytique"><ion-icon name="analytics"></ion-icon><span>Analytique</span></a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1 id="page-title">Tableau de Bord Central</h1>
+                <p style="color: var(--text-muted); margin-top: 4px;" id="page-subtitle">Supervision en temps réel de la plateforme.</p>
+            </div>
+            <div class="header-actions">
+                <div class="status-badge">
+                    <div class="dot"></div>
+                    Système En Ligne
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Overview -->
+        <div id="view-overview" class="view-section">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    CA Généré
+                    <div class="kpi-icon icon-green"><ion-icon name="wallet"></ion-icon></div>
+                </div>
+                <div class="kpi-value">
+                    <span id="kpi-revenue">0</span>
+                    <span class="kpi-unit">FCFA</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    Total Commandes
+                    <div class="kpi-icon icon-blue"><ion-icon name="bag-check"></ion-icon></div>
+                </div>
+                <div class="kpi-value">
+                    <span id="kpi-orders">0</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    Stocks Disponibles
+                    <div class="kpi-icon icon-orange"><ion-icon name="cube"></ion-icon></div>
+                </div>
+                <div class="kpi-value">
+                    <span id="kpi-stocks">0</span>
+                    <span class="kpi-unit">Lots</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    Livreurs Actifs
+                    <div class="kpi-icon icon-purple"><ion-icon name="navigate"></ion-icon></div>
+                </div>
+                <div class="kpi-value">
+                    <span id="kpi-active-drivers">0</span>
+                    <span class="kpi-unit">Sur Carte</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts & Details -->
+        <div class="charts-grid">
+            <!-- Main Chart -->
+            <div class="chart-card">
+                <div class="chart-header">Flux des Commandes & Livraisons</div>
+                <canvas id="mainChart" height="120"></canvas>
+            </div>
+
+            <!-- Detailed Stats -->
+            <div class="chart-card">
+                <div class="chart-header">Répartition Utilisateurs</div>
+                <div class="details-grid" style="margin-bottom: 24px;">
+                    <div class="detail-item">
+                        <span class="detail-label">Clients</span>
+                        <span class="detail-value" id="stat-clients">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Producteurs</span>
+                        <span class="detail-value" id="stat-producers">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Livreurs</span>
+                        <span class="detail-value" id="stat-drivers">0</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Produits en Cat.</span>
+                        <span class="detail-value" id="stat-products">0</span>
+                    </div>
+                </div>
+                
+                <div class="chart-header" style="font-size: 15px; margin-bottom: 16px;">Statut Commandes</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                        <span style="color: var(--text-muted)">Livrées</span>
+                        <span style="color: var(--primary); font-weight: 600;" id="stat-delivered">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                        <span style="color: var(--text-muted)">En Attente</span>
+                        <span style="color: var(--warning); font-weight: 600;" id="stat-pending">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                        <span style="color: var(--text-muted)">Annulées</span>
+                        <span style="color: var(--accent); font-weight: 600;" id="stat-cancelled">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div> <!-- End View: Overview -->
+
+        <!-- View: Utilisateurs -->
+        <div id="view-utilisateurs" class="view-section" style="display: none;">
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div class="chart-header">Répertoire des Utilisateurs</div>
+                
+                <div class="filter-bar">
+                    <button class="filter-btn active" onclick="filterUsers(null, this)">Tous</button>
+                    <button class="filter-btn" onclick="filterUsers('CLIENT', this)">Clients</button>
+                    <button class="filter-btn" onclick="filterUsers('PRODUCTEUR', this)">Agriculteurs</button>
+                    <button class="filter-btn" onclick="filterUsers('LIVREUR', this)">Livreurs</button>
+                </div>
+
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th>Nom & Prénoms</th>
+                            <th>Téléphone</th>
+                            <th>Rôle</th>
+                            <th>Date Inscription</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View: Commandes -->
+        <div id="view-commandes" class="view-section" style="display: none;">
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div class="chart-header">Suivi des Commandes</div>
+                <p style="color: var(--text-muted);">Tableau de suivi des commandes en temps réel et validation OTP.</p>
+                <div style="height: 300px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border); border-radius: 12px; margin-top: 24px;">
+                    <span style="color: var(--text-muted); font-size: 18px;"><ion-icon name="construct" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></ion-icon> Module en construction</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Logistique -->
+        <div id="view-logistique" class="view-section" style="display: none;">
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div class="chart-header">Carte & Logistique (Temps Réel)</div>
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--primary);"></span> Livreurs Actifs</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--secondary);"></span> Producteurs avec Stock</div>
+                    <div class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span> Livraisons en cours</div>
+                </div>
+                <div id="logistics-map"></div>
+                <p style="color: var(--text-muted); margin-top: 16px; font-size: 13px;">* Les positions sont basées sur le dernier point GPS reçu des mobiles.</p>
+            </div>
+        </div>
+
+        <!-- View: Finances -->
+        <div id="view-finances" class="view-section" style="display: none;">
+            <div class="chart-card" style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div class="chart-header" style="margin-bottom: 0;">Flux Financiers (SÉQUESTRE / WAVE)</div>
+                    <button onclick="simulateWavePayment()" style="background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <ion-icon name="flash"></ion-icon> Simuler un Paiement WAVE (Entrée Séquestre)
+                    </button>
+                </div>
+                <p style="color: var(--text-muted); font-size: 14px;">Surveillance des transactions Mobile Money et de l'état des séquestres.</p>
+                
+                <table class="finance-table">
+                    <thead>
+                        <tr>
+                            <th>N° Commande</th>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Producteur</th>
+                            <th>Montant (FCFA)</th>
+                            <th>Fournisseur</th>
+                            <th>Statut Paiement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- View: Analytique -->
+        <div id="view-analytique" class="view-section" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div class="chart-header" style="margin-bottom: 0;">Analyse d'Activité & SMS</div>
+                <button onclick="simulateIncomingSMS()" style="background: var(--secondary); color: #000; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <ion-icon name="phone-portrait-outline"></ion-icon> Simuler SMS entrant (Vendre)
+                </button>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">Pages les plus consultées (Top 5)</div>
+                    <canvas id="pagesChart" height="200"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">Répartition Appareils</div>
+                    <canvas id="devicesChart" height="200"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card" style="margin-top: 24px;">
+                <div class="chart-header">Journaux SMS Récents (Moteur de Parsing)</div>
+                <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Suivi en temps réel des messages entrants (Commandes agriculteurs) et sortants (Confirmations).</p>
+                <div id="sms-logs" style="max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 12px; border: 1px solid var(--border); color: #00E676;">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Formatter for currency
+        const formatCFA = (num) => {
+            return new Intl.NumberFormat('fr-FR').format(num || 0);
+        };
+
+        // Fetch Dashboard Data
+        async function fetchDashboardData() {
+            try {
+                // Point to our Django API endpoint
+                const response = await fetch('/dashboard/stats/');
+                if (!response.ok) throw new Error("Erreur réseau");
+                
+                const data = await response.json();
+                
+                // Update DOM (Numbers)
+                document.getElementById('kpi-revenue').textContent = formatCFA(data.orders.total_revenue_fcfa);
+                document.getElementById('kpi-orders').textContent = formatCFA(data.orders.total);
+                document.getElementById('kpi-stocks').textContent = formatCFA(data.catalog.available_stocks);
+                document.getElementById('kpi-active-drivers').textContent = data.logistics.active_drivers_on_map;
+
+                document.getElementById('stat-clients').textContent = formatCFA(data.users.total_clients);
+                document.getElementById('stat-producers').textContent = formatCFA(data.users.total_producers);
+                document.getElementById('stat-drivers').textContent = formatCFA(data.users.total_drivers);
+                document.getElementById('stat-products').textContent = formatCFA(data.catalog.active_products);
+                
+                document.getElementById('stat-delivered').textContent = formatCFA(data.orders.delivered);
+                document.getElementById('stat-pending').textContent = formatCFA(data.orders.pending);
+                document.getElementById('stat-cancelled').textContent = formatCFA(data.orders.cancelled);
+
+                // Setup Chart
+                setupChart(data);
+
+                // Hide Loader
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                }, 400);
+
+            } catch (error) {
+                console.error("Impossible de charger les statistiques :", error);
+                alert("Erreur de connexion au serveur API.");
+            }
+        }
+
+        // Initialize Chart.js
+        function setupChart(data) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            
+            // Gradient for Line
+            const gradientLine = ctx.createLinearGradient(0, 0, 0, 400);
+            gradientLine.addColorStop(0, 'rgba(0, 230, 118, 0.5)');
+            gradientLine.addColorStop(1, 'rgba(0, 230, 118, 0.0)');
+
+            Chart.defaults.color = '#8B949E';
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+
+            // En absence d'historique (timeseries) côté API, on simule une progression visuelle de démonstration 
+            // répartie sur la semaine basée sur les totaux réels.
+            const baseOrders = data.orders.total;
+            const mockData = [
+                Math.floor(baseOrders * 0.1), Math.floor(baseOrders * 0.15), 
+                Math.floor(baseOrders * 0.12), Math.floor(baseOrders * 0.2), 
+                Math.floor(baseOrders * 0.25), Math.floor(baseOrders * 0.18), baseOrders
+            ];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Auj'],
+                    datasets: [{
+                        label: 'Croissance des Commandes (Simulée)',
+                        data: mockData,
+                        borderColor: '#00E676',
+                        backgroundColor: gradientLine,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0A0C10',
+                        pointBorderColor: '#00E676',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#191E28',
+                            titleColor: '#FFF',
+                            bodyColor: '#FFF',
+                            borderColor: '#21262D',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+        }
+
+        // GPS Map Logic
+        let logisticsMap = null;
+        let mapLayerGroup = null;
+
+        async function initLogisticsMap() {
+            if (logisticsMap) return; // Déjà initialisée
+
+            // Initialisation de Leaflet - Centré sur Abidjan/Côte d'Ivoire
+            logisticsMap = L.map('logistics-map').setView([5.367, -4.008], 11);
+            
+            // Fond de carte Dark Mode (CartoDB Dark Matter)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(logisticsMap);
+
+            mapLayerGroup = L.layerGroup().addTo(logisticsMap);
+            fetchMapData();
+        }
+
+        async function fetchMapData() {
+            if (!logisticsMap) return;
+
+            try {
+                const response = await fetch('/dashboard/map/');
+                const data = await response.json();
+                
+                mapLayerGroup.clearLayers();
+
+                // 1. Ajouter les Producteurs (Bleu)
+                data.producers.forEach(p => {
+                    const icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color: #00B0FF; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,176,255,0.7);"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    });
+                    L.marker([p.location_lat, p.location_lng], {icon: icon})
+                        .bindPopup(`<b>Paysan:</b> ${p.producer__first_name}<br><b>Produit:</b> ${p.product__name}`)
+                        .addTo(mapLayerGroup);
+                });
+
+                // 2. Ajouter les Livreurs (Vert)
+                data.drivers.forEach(d => {
+                    const icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color: #00E676; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px rgba(0,230,118,0.7);"></div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+                    L.marker([d.current_location_lat, d.current_location_lng], {icon: icon})
+                        .bindPopup(`<b>Livreur:</b> ${d.first_name}<br><b>Véhicule:</b> ${d.has_refrigeration ? 'Réfrigéré ❄️' : 'Standard'}`)
+                        .addTo(mapLayerGroup);
+                });
+
+                // 3. Ajouter les trajets de livraisons (Lignes pointillées rouges)
+                data.deliveries.forEach(del => {
+                    const points = [
+                        [del.order__stock__location_lat, del.order__stock__location_lng], // Source
+                        [del.driver__current_location_lat, del.driver__current_location_lng], // Driver
+                        [del.order__client_location_lat, del.order__client_location_lng] // Client
+                    ];
+                    L.polyline([points[0], points[2]], {
+                        color: '#FF3D00', 
+                        weight: 2, 
+                        opacity: 0.5, 
+                        dashArray: '5, 10'
+                    }).addTo(mapLayerGroup);
+                });
+
+            } catch (err) {
+                console.error("Erreur Map:", err);
+            }
+        }
+
+        // Finance Tab Logic
+        async function fetchFinanceData() {
+            const body = document.getElementById('transaction-body');
+            body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-muted);">Chargement des transactions...</td></tr>';
+            
+            try {
+                const response = await fetch('/dashboard/transactions/');
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-muted);">Aucune transaction financière trouvée.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = '';
+                data.forEach(t => {
+                    const statusClass = t.status === 'ESCROWED' ? 'badge-escrow' : 'badge-released';
+                    body.innerHTML += `
+                        <tr>
+                            <td>#${t.id}</td>
+                            <td style="color: var(--text-muted); font-size: 12px;">${t.date}</td>
+                            <td style="font-weight: 500;">${t.client}</td>
+                            <td>${t.producer}</td>
+                            <td style="font-weight: 700; color: var(--secondary);">${formatCFA(t.amount)}</td>
+                            <td><span style="letter-spacing: 1px; font-weight: 600; font-size: 11px;">${t.provider}</span></td>
+                            <td><span class="${statusClass}">${t.status_display}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Finance Error:", err);
+            }
+        }
+
+        async function simulateWavePayment() {
+            // Dans ce prototype, on va juste envoyer un Webhook mock
+            alert("Simulation en cours... Le webhook WAVE est envoyé au serveur.");
+            
+            try {
+                const response = await fetch('/api/payments/webhook/mobilemoney/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        transaction_id: "WAVE-SIMULATION-1234",
+                        status: "SUCCESS"
+                    })
+                });
+                
+                const result = await response.json();
+                console.log("Simul Result:", result);
+                fetchFinanceData(); // Rafraîchir
+                fetchDashboardData(); // Rafraîchir les stats du haut
+                
+                alert("Paiement réussi ! L'état de la commande est passé en SÉQUESTRE sur le dashboard.");
+            } catch (err) {
+                alert("Erreur simulation. Vérifiez que le transaction_id existe en DB.");
+            }
+        }
+
+        // Users Tab Logic
+        async function fetchUsers(role = null) {
+            const body = document.getElementById('user-body');
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--text-muted);">Chargement...</td></tr>';
+            
+            let url = '/dashboard/users/';
+            if (role) url += `?role=${role}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                body.innerHTML = '';
+                data.forEach(u => {
+                    let roleIcon = '<ion-icon name="person-outline"></ion-icon>';
+                    if (u.role === 'PRODUCTEUR') roleIcon = '<ion-icon name="leaf-outline" style="color: var(--primary)"></ion-icon>';
+                    if (u.role === 'LIVREUR') roleIcon = '<ion-icon name="bicycle-outline" style="color: var(--secondary)"></ion-icon>';
+                    
+                    body.innerHTML += `
+                        <tr>
+                            <td style="font-weight: 500;">${u.name}</td>
+                            <td style="color: var(--text-muted);">${u.phone}</td>
+                            <td><div style="display:flex; align-items:center; gap:8px;">${roleIcon} ${u.role_display}</div></td>
+                            <td style="font-size: 12px;">${u.date_joined}</td>
+                            <td><span style="color: ${u.is_active ? 'var(--primary)' : 'var(--accent)'}; font-size: 12px;">● ${u.is_active ? 'Actif' : 'Bloqué'}</span></td>
+                            <td>
+                                <button style="background:none; border:none; color: var(--secondary); cursor:pointer; font-size: 18px;" title="Editer"><ion-icon name="create-outline"></ion-icon></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        function filterUsers(role, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fetchUsers(role);
+        }
+
+        // Analytics Tab Logic
+        let pagesChart = null, devicesChart = null;
+
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch('/dashboard/analytics/');
+                const data = await response.json();
+                
+                renderPagesChart(data.top_paths);
+                renderDevicesChart(data.devices);
+                renderSMSLogs(data.sms_logs);
+            } catch (err) { console.error(err); }
+        }
+
+        function renderSMSLogs(logs) {
+            const container = document.getElementById('sms-logs');
+            if (logs.length === 0) {
+                container.innerHTML = '<div>Aucun log SMS pour le moment.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            logs.forEach(log => {
+                const dir = log.direction === 'INBOUND' ? '📥 [ENTRANT]' : '📤 [SORTANT]';
+                const color = log.direction === 'INBOUND' ? '#00B0FF' : '#00E676';
+                const statusColor = log.status === 'ERROR' ? '#FF3D00' : 'inherit';
+                
+                container.innerHTML += `
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <span style="color: ${color}">${dir}</span> | ${log.time} | <b>${log.phone}</b><br>
+                        <span style="margin-left: 20px; opacity: 0.8;">Text: "${log.text}"</span><br>
+                        <span style="margin-left: 20px; font-size: 11px; color: ${statusColor}">Status: ${log.status}</span>
+                    </div>
+                `;
+            });
+        }
+
+        async function simulateIncomingSMS() {
+            const examples = [
+                "VENDRE IGNAME 50 KG",
+                "VENDRE MAIS 100 KG",
+                "STOCK RIZ 500 KG",
+                "VENDRE BOEUF 2 TETE"
+            ];
+            const randomMsg = examples[Math.floor(Math.random() * examples.length)];
+            
+            alert(`Simulation de l'envoi du SMS : "${randomMsg}"`);
+            
+            try {
+                const response = await fetch('/dashboard/simulate-sms/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({ text: randomMsg })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert("SMS traité avec succès ! Le stock a été mis à jour.");
+                    fetchAnalytics(); // Rafraîchir les logs
+                    fetchDashboardData(); // Rafraîchir les KPIs
+                } else {
+                    alert("Erreur: " + result.error);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function renderPagesChart(paths) {
+            const ctx = document.getElementById('pagesChart').getContext('2d');
+            if (pagesChart) pagesChart.destroy();
+            
+            pagesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: paths.map(p => p.path),
+                    datasets: [{
+                        label: 'Visites',
+                        data: paths.map(p => p.visits),
+                        backgroundColor: '#00B0FF',
+                        borderRadius: 8
+                    }]
+                },
+                options: { 
+                    indexAxis: 'y', 
+                    responsive: true, 
+                    plugins: { legend: { display: false } } 
+                }
+            });
+        }
+
+        function renderDevicesChart(devices) {
+            const ctx = document.getElementById('devicesChart').getContext('2d');
+            if (devicesChart) devicesChart.destroy();
+            
+            devicesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mobile', 'Desktop'],
+                    datasets: [{
+                        data: [devices.mobile, devices.desktop],
+                        backgroundColor: ['#00E676', '#FF3D00'],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // Cookie Banner Logic
+        function checkCookieConsent() {
+            if (!localStorage.getItem('agridirect_consent')) {
+                setTimeout(() => {
+                    document.getElementById('cookie-banner').style.display = 'block';
+                }, 2000);
+            }
+        }
+
+        function acceptCookies() {
+            localStorage.setItem('agridirect_consent', 'true');
+            document.getElementById('cookie-banner').style.opacity = '0';
+            setTimeout(() => document.getElementById('cookie-banner').style.display = 'none', 500);
+            // Le cookie serveur est déjà posé par le middleware, ici on gère juste l'UI
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Setup Navigation Logic
+        function setupNavigation() {
+            const links = document.querySelectorAll('.nav-link');
+            const views = document.querySelectorAll('.view-section');
+            const pageTitle = document.getElementById('page-title');
+            const pageSubtitle = document.getElementById('page-subtitle');
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remettre à zéro l'état actif
+                    links.forEach(l => l.classList.remove('active'));
+                    views.forEach(v => v.style.display = 'none');
+
+                    // Activer le lien cliqué
+                    link.classList.add('active');
+                    const targetId = link.getAttribute('data-target');
+                    
+                    // Afficher la vue correspondante
+                    const targetView = document.getElementById('view-' + targetId);
+                    targetView.style.display = 'block';
+
+                    // Initialisations spéciales
+                    if (targetId === 'utilisateurs') fetchUsers();
+                    if (targetId === 'analytique') fetchAnalytics();
+                    
+                    if (targetId === 'logistique') {
+                        setTimeout(() => {
+                            initLogisticsMap();
+                            logisticsMap.invalidateSize(); // Indispensable pour Leaflet dans un onglet caché
+                        }, 100);
+                    }
+
+                    if (targetId === 'finances') fetchFinanceData();
+
+                    // Mettre à jour l'entête
+                    const sectionData = {
+                        'overview': { title: 'Tableau de Bord Central', subtitle: 'Supervision en temps réel de la plateforme.' },
+                        'utilisateurs': { title: 'Gestion des Utilisateurs', subtitle: 'Annuaire des clients, agriculteurs et transporteurs.' },
+                        'commandes': { title: 'Commandes & Séquestres', subtitle: 'Suivi de l\'état des commandes en cours.' },
+                        'logistique': { title: 'Logistique & Dispatch (GPS)', subtitle: 'Visualisation temps réel des livreurs et livraisons.' },
+                        'finances': { title: 'Finances & Transactions', subtitle: 'Historique des paiements Mobile Money.' },
+                        'analytique': { title: 'Analytique & Tracking', subtitle: 'Analyse comportementale des cookies et appareils.' }
+                    };
+
+                    if (sectionData[targetId]) {
+                        pageTitle.textContent = sectionData[targetId].title;
+                        pageSubtitle.textContent = sectionData[targetId].subtitle;
+                    }
+                });
+            });
+        }
+
+        // Boot
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchDashboardData();
+            setupNavigation();
+            checkCookieConsent();
+        });
+    </script>
+</body>
+</html>

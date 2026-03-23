@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Livreur | AgriDirect-CIV</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --primary: #00E676;
+            --bg-body: #0F172A; /* Dark mode for driver app */
+            --bg-card: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --accent: #00B0FF;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --border: rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); font-size: 14px; }
+        h1, h2, h3 { font-family: 'Outfit'; }
+
+        /* App Wrapper */
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 90px;
+        }
+
+        /* Top Header */
+        header {
+            padding: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; align-items: center; justify-content: center; border: 2px solid var(--primary); }
+
+        /* Stats Row */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 0 24px 24px 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-val { font-size: 20px; font-weight: 700; color: var(--primary); display: block; }
+        .stat-label { font-size: 12px; color: var(--text-muted); }
+
+        /* Tabs / Filter */
+        .filter-tabs {
+            padding: 0 24px 16px 24px;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            background: #1E293B;
+            border-radius: 100px;
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+
+        .tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+        /* Mission List */
+        .mission-list { padding: 0 24px; display: flex; flex-direction: column; gap: 16px; }
+
+        .mission-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: transform 0.2s;
+        }
+
+        .mission-header { display: flex; justify-content: space-between; margin-bottom: 12px; align-items: flex-start; }
+        .m-id { font-weight: 700; color: var(--text-muted); }
+        .m-status-pill { font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; background: rgba(0, 230, 118, 0.1); color: var(--primary); }
+
+        .m-route { display: flex; flex-direction: column; gap: 12px; padding: 12px 0; border-left: 2px dashed #475569; margin-left: 10px; padding-left: 20px; position: relative; }
+        .m-point { position: relative; }
+        .m-point::before { content: ""; position: absolute; left: -26px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #475569; }
+        .m-point.pickup::before { background: var(--accent); }
+        .m-point.dropoff::before { background: var(--primary); }
+
+        .p-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); display: block; }
+        .p-addr { font-weight: 500; font-size: 13px; }
+
+        .m-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+        .m-reward { font-size: 18px; font-weight: 700; color: var(--primary); }
+        
+        .m-btn {
+            background: var(--primary);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Bottom Nav */
+        nav.bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 80px;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); text-decoration: none; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item ion-icon { font-size: 24px; }
+        .nav-item span { font-size: 10px; font-weight: 600; }
+
+        /* Active Mission Modal */
+        #mission-detail {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body);
+            z-index: 2000;
+            padding-bottom: 20px;
+            display: none;
+            overflow-y: auto;
+        }
+
+        #map-mission { width: 100%; height: 35vh; background: #334155; }
+
+        .detail-body { padding: 30px 24px; margin-top: -30px; background: var(--bg-body); border-radius: 30px 30px 0 0; position: relative; z-index: 10; }
+
+        .action-bar {
+            position: sticky; bottom: 0; padding: 20px 24px; background: var(--bg-body);
+        }
+
+        #main-action-btn { width: 100%; padding: 18px; border-radius: 16px; border: none; background: var(--primary); color: #000; font-weight: 700; font-size: 16px; cursor: pointer; }
+
+        /* OTP Input */
+        .otp-box { display: none; margin-top: 24px; text-align: center; }
+        .otp-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .otp-inputs input { width: 45px; height: 55px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; color: white; text-align: center; font-size: 24px; font-weight: 700; }
+        .otp-inputs input:focus { border-color: var(--primary); outline: none; }
+
+        /* Loader */
+        #loader { position: fixed; top: 0; left:0; width: 100vw; height: 100vh; background: var(--bg-body); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(0, 230, 118, 0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <div class="app-container">
+        <header>
+            <div class="user-badge">
+                <div class="avatar"><ion-icon name="bicycle"></ion-icon></div>
+                <div>
+                    <h2 id="driver-name">Alassane</h2>
+                    <span style="color: var(--primary); font-size: 11px; font-weight: 700;">● DISPONIBLE</span>
+                </div>
+            </div>
+            <button style="background:none; border:none; font-size: 24px; color: var(--text-main);"><ion-icon name="notifications-outline"></ion-icon></button>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-val" id="total-earnings">0 F</span>
+                <span class="stat-label">Gains du jour</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val" id="completed-count">0</span>
+                <span class="stat-label">Courses finies</span>
+            </div>
+        </div>
+
+        <div class="filter-tabs">
+            <div class="tab active">À faire</div>
+            <div class="tab">En cours</div>
+            <div class="tab">Terminées</div>
+        </div>
+
+        <div class="mission-list" id="mission-container">
+            <!-- Items injected by JS -->
+        </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item active">
+                <ion-icon name="list"></ion-icon>
+                <span>Missions</span>
+            </div>
+            <div class="nav-item">
+                <ion-icon name="wallet-outline"></ion-icon>
+                <span>Portefeuille</span>
+            </div>
+            <div class="nav-item">
+                <ion-icon name="map-outline"></ion-icon>
+                <span>Carte</span>
+            </div>
+            <div class="nav-item">
+                <ion-icon name="person-outline"></ion-icon>
+                <span>Profil</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- UI Overlay: Mission Detail -->
+    <div id="mission-detail">
+        <div id="map-mission"></div>
+        <button onclick="closeMission()" style="position: fixed; top: 20px; left: 20px; z-index: 1001; background: var(--bg-card); border: none; width: 44px; height: 44px; border-radius: 50%; color: white; font-size: 24px; display: flex; align-items: center; justify-content: center;"><ion-icon name="arrow-back"></ion-icon></button>
+
+        <div class="detail-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+                <div>
+                    <h1 id="det-title">Course #123</h1>
+                    <p style="color: var(--text-muted); margin-top: 4px;">Produit: <span id="det-product" style="color: var(--primary)">Bœuf (2 KG)</span></p>
+                </div>
+                <div class="m-reward" id="det-reward">2,500 F</div>
+            </div>
+
+            <div class="m-route">
+                <div class="m-point pickup">
+                    <span class="p-label">Point d'enlèvement (Producteur)</span>
+                    <span class="p-addr" id="det-pickup">Ferme de Yopougon, Route d'Azito</span>
+                    <p style="font-size: 11px; color: var(--accent); margin-top: 4px; font-weight: 600;">Contact: <span id="det-prod-contact">07 00 .. ..</span></p>
+                </div>
+                <div class="m-point dropoff">
+                    <span class="p-label">Client (Destination)</span>
+                    <span class="p-addr" id="det-dropoff">Cocody, Riviera 3</span>
+                    <p style="font-size: 11px; color: var(--accent); margin-top: 4px; font-weight: 600;">Contact: <span id="det-client-contact">05 .. .. ..</span></p>
+                </div>
+            </div>
+
+            <div class="otp-box" id="otp-section">
+                <h3 style="margin-bottom: 12px;">Code de Validation Client</h3>
+                <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">Demandez le code secret à 6 chiffres au client.</p>
+                <div class="otp-inputs">
+                    <input type="text" maxlength="6" id="otp-input" placeholder="000000" style="width: 200px;">
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button id="main-action-btn" onclick="handleMainAction()">Démarrer la course</button>
+        </div>
+    </div>
+
+    <script>
+        let missions = [];
+        let activeMission = null;
+        let missionMap = null;
+
+        async function fetchMissions() {
+            try {
+                const response = await fetch('/api/deliveries/');
+                const data = await response.json();
+                missions = data.results;
+                renderMissions();
+                updateStats();
+            } catch (err) { console.error(err); }
+            finally { 
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        function updateStats() {
+            const completed = missions.filter(m => m.status === 'DELIVERED');
+            const total = completed.reduce((sum, m) => sum + parseInt(m.delivery_fee), 0);
+            document.getElementById('total-earnings').innerText = total.toLocaleString() + ' F';
+            document.getElementById('completed-count').innerText = completed.length;
+        }
+
+        function renderMissions() {
+            const container = document.getElementById('mission-container');
+            container.innerHTML = '';
+
+            const activeMissions = missions.filter(m => m.status !== 'DELIVERED' && m.status !== 'CANCELLED');
+
+            if (activeMissions.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-muted);">
+                    <ion-icon name="sparkles-outline" style="font-size: 40px; margin-bottom: 16px;"></ion-icon><br>
+                    Aucune mission pour le moment.
+                </div>`;
+                return;
+            }
+
+            activeMissions.forEach(m => {
+                const statusLabels = {
+                    'ASSIGNED': 'Assignée',
+                    'EN_ROUTE_PICKUP': 'En route (Pickup)',
+                    'PICKED_UP': 'Produit récupéré',
+                    'EN_ROUTE_DELIVERY': 'En route (Client)'
+                };
+
+                container.innerHTML += `
+                    <div class="mission-card" onclick="openMission(${m.id})">
+                        <div class="mission-header">
+                            <span class="m-id">#${m.id}</span>
+                            <span class="m-status-pill">${statusLabels[m.status]}</span>
+                        </div>
+                        <div class="m-route">
+                            <div class="m-point pickup">
+                                <span class="p-label">Pickup</span>
+                                <span class="p-addr">${m.order_detail.producer_name}</span>
+                            </div>
+                            <div class="m-point dropoff">
+                                <span class="p-label">Livraison</span>
+                                <span class="p-addr">${m.order_detail.delivery_address}</span>
+                            </div>
+                        </div>
+                        <div class="m-footer">
+                            <div class="m-reward">${Math.round(m.delivery_fee).toLocaleString()} F</div>
+                            <button class="m-btn">Détails</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openMission(id) {
+            activeMission = missions.find(m => m.id === id);
+            document.getElementById('mission-detail').style.display = 'block';
+            
+            // Fill details
+            document.getElementById('det-title').innerText = `Course #${activeMission.id}`;
+            document.getElementById('det-product').innerText = `${activeMission.order_detail.product_name} (${activeMission.order_detail.quantity} ${activeMission.order_detail.unit})`;
+            document.getElementById('det-reward').innerText = Math.round(activeMission.delivery_fee).toLocaleString() + ' F';
+            document.getElementById('det-pickup').innerText = activeMission.order_detail.producer_name + ", Yopougon";
+            document.getElementById('det-dropoff').innerText = activeMission.order_detail.delivery_address;
+            document.getElementById('det-prod-contact').innerText = activeMission.order_detail.producer_phone;
+            document.getElementById('det-client-contact').innerText = activeMission.order_detail.client_phone;
+
+            updateActionButton();
+            initMissionMap();
+        }
+
+        function closeMission() {
+            document.getElementById('mission-detail').style.display = 'none';
+        }
+
+        function updateActionButton() {
+            const btn = document.getElementById('main-action-btn');
+            const otpSection = document.getElementById('otp-section');
+            otpSection.style.display = 'none';
+
+            if (activeMission.status === 'ASSIGNED') {
+                btn.innerText = "Démarrer la course";
+                btn.style.background = 'var(--accent)';
+            } else if (activeMission.status === 'EN_ROUTE_PICKUP') {
+                btn.innerText = "Confirmer le ramassage";
+                btn.style.background = 'var(--warning)';
+            } else if (activeMission.status === 'PICKED_UP') {
+                btn.innerText = "En route vers le client";
+                btn.style.background = 'var(--accent)';
+            } else if (activeMission.status === 'EN_ROUTE_DELIVERY') {
+                btn.innerText = "Valider la livraison";
+                btn.style.background = 'var(--primary)';
+                otpSection.style.display = 'block';
+            }
+        }
+
+        async function handleMainAction() {
+            let nextStatus;
+            let payload = {};
+
+            if (activeMission.status === 'ASSIGNED') nextStatus = 'EN_ROUTE_PICKUP';
+            else if (activeMission.status === 'EN_ROUTE_PICKUP') nextStatus = 'PICKED_UP';
+            else if (activeMission.status === 'PICKED_UP') nextStatus = 'EN_ROUTE_DELIVERY';
+            else if (activeMission.status === 'EN_ROUTE_DELIVERY') {
+                nextStatus = 'DELIVERED';
+                const otp = document.getElementById('otp-input').value;
+                if (!otp || otp.length < 6) return alert("Veuillez saisir le code OTP à 6 chiffres.");
+                payload.otp_code = otp;
+            }
+
+            payload.status = nextStatus;
+
+            try {
+                const response = await fetch(`/api/deliveries/${activeMission.id}/`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (response.status === 200) {
+                    if (nextStatus === 'DELIVERED') {
+                        alert("Livraison réussie ! Votre gain a été crédité.");
+                        closeMission();
+                    } else {
+                        activeMission.status = nextStatus;
+                        updateActionButton();
+                    }
+                    fetchMissions();
+                } else {
+                    alert("Erreur: " + data.detail);
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function initMissionMap() {
+            if (missionMap) missionMap.remove();
+            
+            missionMap = L.map('map-mission', { zoomControl: false }).setView([5.34, -3.98], 13);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(missionMap);
+
+            // Mock route points
+            const pickup = [5.33, -4.01];
+            const dropoff = [5.36, -3.97];
+
+            L.marker(pickup, { icon: L.divIcon({ className: 'p-icon', html: '<div style="width:12px;height:12px;background:#00B0FF;border-radius:50%;border:2px solid white;"></div>' }) }).addTo(missionMap);
+            L.marker(dropoff, { icon: L.divIcon({ className: 'p-icon', html: '<div style="width:12px;height:12px;background:#00E676;border-radius:50%;border:2px solid white;"></div>' }) }).addTo(missionMap);
+            
+            const line = L.polyline([pickup, dropoff], { color: 'var(--primary)', dashArray: '5, 10' }).addTo(missionMap);
+            missionMap.fitBounds(line.getBounds(), { padding: [50, 50] });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', fetchMissions);
+
+    </script>
+</body>
+</html>
