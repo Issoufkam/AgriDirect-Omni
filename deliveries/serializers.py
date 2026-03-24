@@ -47,3 +47,13 @@ class DeliveryUpdateSerializer(serializers.Serializer):
     """Serializer pour la mise à jour du statut par le livreur."""
     status = serializers.ChoiceField(choices=Delivery.Status.choices)
     otp_code = serializers.CharField(required=False, max_length=6)
+
+
+class SimpleDeliverySerializer(serializers.ModelSerializer):
+    """Serializer minimal pour afficher les infos du livreur dans une commande."""
+    driver_name = serializers.CharField(source="driver.get_full_name", read_only=True)
+    driver_phone = serializers.CharField(source="driver.phone_number", read_only=True)
+
+    class Meta:
+        model = Delivery
+        fields = ["id", "status", "driver_name", "driver_phone"]

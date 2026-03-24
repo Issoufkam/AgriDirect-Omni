@@ -57,6 +57,14 @@ class OrderSerializer(serializers.ModelSerializer):
         source="get_payment_status_display", read_only=True
     )
     product_image = serializers.SerializerMethodField()
+    delivery = serializers.SerializerMethodField()
+
+    def get_delivery(self, obj):
+        from deliveries.serializers import SimpleDeliverySerializer
+        try:
+            return SimpleDeliverySerializer(obj.delivery).data
+        except:
+            return None
 
     def get_product_image(self, obj):
         if obj.stock.product.image:
@@ -83,6 +91,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "status_display",
             "payment_status",
             "payment_status_display",
+            "delivery",
             "transaction_id",
             "payment_provider",
             "delivery_address",

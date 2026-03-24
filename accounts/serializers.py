@@ -7,6 +7,7 @@ pour l'API REST.
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from .models import Wallet, Transaction
 
 User = get_user_model()
 
@@ -88,3 +89,21 @@ class DriverLocationSerializer(serializers.Serializer):
 
     longitude = serializers.FloatField(min_value=-180, max_value=180)
     latitude = serializers.FloatField(min_value=-90, max_value=90)
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    """Serializer pour l'historique des transactions."""
+    date = serializers.DateTimeField(source="timestamp", format="%d/%m/%Y %H:%M")
+
+    class Meta:
+        model = Transaction
+        fields = ["amount", "description", "date"]
+
+
+class WalletSerializer(serializers.ModelSerializer):
+    """Serializer pour le portefeuille utilisateur."""
+    transactions = TransactionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Wallet
+        fields = ["balance", "transactions"]

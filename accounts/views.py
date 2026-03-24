@@ -12,7 +12,9 @@ from .serializers import (
     DriverLocationSerializer,
     UserProfileSerializer,
     UserRegistrationSerializer,
+    WalletSerializer,
 )
+from .models import Wallet
 
 
 class RegisterView(generics.CreateAPIView):
@@ -81,3 +83,17 @@ class UpdateDriverLocationView(APIView):
             {"detail": "Position mise à jour avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+class WalletView(generics.RetrieveAPIView):
+    """
+    GET /api/wallet/
+    Affiche le solde et l'historique des transactions de l'utilisateur.
+    """
+    serializer_class = WalletSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        # On s'assure que le wallet existe (au cas où le signal aurait échoué ou data ancienne)
+        wallet, _ = Wallet.objects.get_or_create(user=self.request.user)
+        return wallet

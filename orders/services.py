@@ -34,11 +34,13 @@ def calculate_delivery_fee(distance_km: float) -> Decimal:
     base_fee = settings.DELIVERY_BASE_FEE
     per_km_fee = settings.DELIVERY_PER_KM_FEE
     
-    # ── Simulation de l'état des routes ──
-    # En Côte d'Ivoire, les "pistes" rurales augmentent la difficulté de 20%
-    road_condition_multiplier = random.choice([1.0, 1.25, 1.5]) # Normal, Dégradé, Piste
+    # ── Détermination de l'état des routes (Déterministe pour la prévisibilité) ──
+    # Simulation: Si la distance est grande (> 5km), on assume 20% de pistes rurales.
+    road_condition_multiplier = 1.0
+    if distance_km > 5:
+        road_condition_multiplier = 1.20
     
-    fee = (base_fee + (distance_km * per_km_fee)) * Decimal(str(road_condition_multiplier))
+    fee = (base_fee + (Decimal(str(distance_km)) * per_km_fee)) * Decimal(str(road_condition_multiplier))
     return Decimal(str(round(fee)))
 
 

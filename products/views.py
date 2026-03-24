@@ -4,12 +4,13 @@ Vues API pour l'application Products.
 Fournit l'endpoint marketplace avec recherche géolocalisée.
 """
 
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from django.views.generic import TemplateView
-from .serializers import MarketplaceItemSerializer
+from .models import Product, Stock
+from .serializers import MarketplaceItemSerializer, ProductSerializer, StockSerializer
 from .services import get_marketplace_stocks
 
 
@@ -73,3 +74,26 @@ class MarketplaceUIView(TemplateView):
     Vue pour afficher l'interface graphique de la Marketplace (Boutique Client).
     """
     template_name = "products/marketplace.html"
+
+
+class ProductPriceListView(generics.ListAPIView):
+    """
+    GET /api/products/prices/
+    Liste les prix nationaux conseillés pour tous les produits actifs.
+    """
+    queryset = Product.objects.filter(is_active=True)
+    serializer_class = ProductSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class StockCreateView(generics.CreateAPIView):
+    """
+    POST /api/stocks/
+    Permet à un producteur de publier un nouveau stock.
+    """
+    serializer_class = StockSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # On force le producteur à être l'utilisateur connecté
+        serializer.save(producer=self.request.user)

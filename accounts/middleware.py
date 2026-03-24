@@ -19,20 +19,21 @@ class TrackingMiddleware:
             tracking_id = str(uuid.uuid4())
             is_new = True
 
-        # 2. Capturer l'activité (pour toutes les requêtes sauf les fichiers statiques/média pour éviter le bruit)
-        if not request.path.startswith(('/static/', '/media/', '/favicon.ico')):
+        # 2. Capturer l'activité (asynchrone via Celery)
+        if not request.path.startswith(('/static/', '/media/', '/favicon.ico', '/api/schema/')):
+            from .tasks import record_user_activity
             try:
-                UserActivity.objects.create(
-                    user=request.user if request.user.is_authenticated else None,
-                    session_key=request.session.session_key if request.session.session_key else None,
+                record_user_activity.delay(
+                    user_id=request.user.id if request.user.is_authenticated else None,
                     tracking_id=tracking_id,
+                    session_key=request.session.session_key if request.session.session_key else None,
                     ip_address=self.get_client_ip(request),
                     user_agent=request.META.get('HTTP_USER_AGENT', ''),
                     path=request.path,
                     method=request.method
                 )
             except Exception:
-                # On ignore silencieusement si la table n'existe pas encore
+                # Silencieux si Celery est indisponible ou autre erreur
                 pass
 
         # 3. Récupérer la réponse

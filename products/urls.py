@@ -1,12 +1,14 @@
 from django.urls import path
-from .views import MarketplaceView, MarketplaceUIView
+from . import views
 
 app_name = "products"
 
 urlpatterns = [
     # UI Marketplace (Public/Client)
-    path("marketplace/", MarketplaceUIView.as_view(), name="marketplace_ui"),
+    path("marketplace/", views.MarketplaceUIView.as_view(), name="marketplace_ui"),
     
     # API Marketplace
-    path("api/marketplace/", MarketplaceView.as_view(), name="marketplace_api"),
+    path("api/marketplace/", views.MarketplaceView.as_view(), name="marketplace_api"),
+    path("api/products/prices/", views.ProductPriceListView.as_view(), name="product-prices"),
+    path("api/stocks/", views.StockCreateView.as_view(), name="stock-create"),
 ]

@@ -701,6 +701,11 @@
                 return;
             }
 
+            // UI LIMITATION CHECK: System currently handles one type of product per order
+            if (cart.length > 1) {
+                alert("Note: Actuellement, le système traite une commande par type de produit. Nous allons traiter votre premier article.");
+            }
+
             const btn = document.getElementById('checkout-btn');
             btn.disabled = true;
             btn.innerText = "Traitement...";

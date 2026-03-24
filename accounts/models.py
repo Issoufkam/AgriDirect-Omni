@@ -189,3 +189,43 @@ class UserActivity(models.Model):
 
     def __str__(self):
         return f"{self.tracking_id} -> {self.path} ({self.timestamp})"
+
+
+class Wallet(models.Model):
+    """
+    Portefeuille virtuel pour stocker les gains des producteurs
+    et les crédits des clients.
+    """
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="wallet")
+    balance = models.DecimalField("solde actuel", max_digits=12, decimal_places=2, default=0.00)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Wallet {self.user.phone_number} - {self.balance} FCFA"
+
+
+class Transaction(models.Model):
+    """
+    Historique des mouvements financiers d'un portefeuille.
+    """
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="transactions")
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+
+    def __str__(self):
+        return f"{self.wallet.user.phone_number} | {self.amount} | {self.timestamp}"
+
+
+# ── Signals ──
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=CustomUser)
+def create_user_wallet(sender, instance, created, **kwargs):
+    """Crée un portefeuille automatiquement à la création de chaque utilisateur."""
+    if created:
+        Wallet.objects.create(user=instance)

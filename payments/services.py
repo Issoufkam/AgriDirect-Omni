@@ -64,7 +64,7 @@ class MobileMoneyService:
                 # ── Notification SMS au Producteur ──
                 producer_msg = (
                     f"AgriDirect: Nouvelle commande #{order.id}! "
-                    f"Produit: {order.product.name} ({order.quantity} {order.order_unit}). "
+                    f"Produit: {order.product.name} ({order.quantity} {order.product.get_unit_display()}). "
                     f"Préparez le stock pour l'enlèvement."
                 )
                 send_sms(str(order.producer.phone_number), producer_msg)

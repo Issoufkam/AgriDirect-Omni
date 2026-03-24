@@ -6,7 +6,7 @@ Création et gestion des commandes.
 
 import logging
 
-from rest_framework import permissions, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.views.generic import TemplateView
@@ -173,3 +173,23 @@ class OrderHistoryUIView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def test_func(self):
         # Accessible par le staff ou les clients authentifiés
         return self.request.user.is_staff or self.request.user.is_client
+
+
+class ProducerOrderListView(generics.ListAPIView):
+    """
+    GET /api/producer/orders/
+    Liste toutes les commandes passées à un producteur spécifique.
+    Retourne la liste directe (Array) sans pagination pour le mobile.
+    """
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Order.objects.filter(stock__producer=self.request.user).select_related(
+            "stock__product", "delivery__driver"
+        ).order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
