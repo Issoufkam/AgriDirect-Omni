@@ -6,7 +6,7 @@ Centralise toutes les routes API et la documentation Swagger.
 
 from django.contrib import admin
 from django.urls import include, path
-from django.views.generic import RedirectView
+from products.views import MarketplaceUIView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -17,8 +17,8 @@ urlpatterns = [
     # ── Admin ──
     path("admin/", admin.site.urls),
 
-    # ── Redirection Accueil ──
-    path("", RedirectView.as_view(url='/marketplace/'), name='root-redirect'),
+    # ── Accueil : Marketplace (En direct pour éviter le 302 et corriger Render) ──
+    path("", MarketplaceUIView.as_view(), name='marketplace_ui_root'),
 
     # ── Application Principale (Inclus les routes UI ET API de chaque module) ──
     # Note: On inclut à la racine "". C'est chaque `urls.py` d'app qui gère
