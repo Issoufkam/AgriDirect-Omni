@@ -29,7 +29,7 @@ class MarketplaceView(APIView):
         product (str): Recherche par nom de produit.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         """
