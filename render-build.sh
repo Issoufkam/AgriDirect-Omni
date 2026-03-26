@@ -11,6 +11,9 @@ python -m pip install -r requirements.txt
 echo "🎨 Collecte des fichiers statiques UI..."
 python manage.py collectstatic --no-input
 
+echo "🔍 État actuel des migrations..."
+python manage.py showmigrations
+
 echo "🛡️ Application des migrations (Base de données)..."
 python manage.py migrate --no-input
 
