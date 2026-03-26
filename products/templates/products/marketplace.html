@@ -442,6 +442,9 @@
                     <ion-icon name="person-circle-outline"></ion-icon> Mon Espace
                 </div>
                 <ul class="category-list">
+                    <li class="category-item" onclick="window.location.href='/profile/'">
+                        <ion-icon name="person-outline"></ion-icon> Mon Profil
+                    </li>
                     <li class="category-item" onclick="window.location.href='/mes-commandes/'">
                         <ion-icon name="receipt-outline"></ion-icon> Mes Commandes
                     </li>
@@ -519,7 +522,7 @@
             if (agriUser) {
                 const user = JSON.parse(agriUser);
                 authSection.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="window.location.href='/mes-commandes/'">
+                    <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="window.location.href='/profile/'">
                         <span style="font-size: 14px; font-weight: 600; color: var(--text-main);">${user.first_name}</span>
                         <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items:center; justify-content: center;">
                             <ion-icon name="person-outline"></ion-icon>
@@ -647,6 +650,17 @@
             }
 
             container.innerHTML = '';
+            
+            // Note for multi-product limitation
+            if (cart.length > 0) {
+                container.innerHTML = `
+                    <div style="background: #FFFBEB; border: 1px solid #FEF3C7; color: #92400E; padding: 12px; border-radius: 12px; font-size: 12px; margin-bottom: 20px; display: flex; gap: 8px; align-items: flex-start;">
+                        <ion-icon name="information-circle" style="font-size: 18px; flex-shrink: 0;"></ion-icon>
+                        <span>Note: Actuellement, le système traite une commande par type de produit. Nous allons traiter votre premier article.</span>
+                    </div>
+                `;
+            }
+
             let total = 0;
 
             cart.forEach(item => {
@@ -702,9 +716,7 @@
             }
 
             // UI LIMITATION CHECK: System currently handles one type of product per order
-            if (cart.length > 1) {
-                alert("Note: Actuellement, le système traite une commande par type de produit. Nous allons traiter votre premier article.");
-            }
+            // (Note: Handled visually in the cart drawer now)
 
             const btn = document.getElementById('checkout-btn');
             btn.disabled = true;

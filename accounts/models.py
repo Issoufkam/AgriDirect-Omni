@@ -191,6 +191,8 @@ class UserActivity(models.Model):
         return f"{self.tracking_id} -> {self.path} ({self.timestamp})"
 
 
+from django.db import transaction
+
 class Wallet(models.Model):
     """
     Portefeuille virtuel pour stocker les gains des producteurs
@@ -202,6 +204,22 @@ class Wallet(models.Model):
 
     def __str__(self):
         return f"Wallet {self.user.phone_number} - {self.balance} FCFA"
+
+    def deposit(self, amount, description):
+        """Ajoute de l'argent au portefeuille et crée une transaction."""
+        with transaction.atomic():
+            self.balance += amount
+            self.save()
+            Transaction.objects.create(wallet=self, amount=amount, description=description)
+
+    def withdraw(self, amount, description):
+        """Retire de l'argent du portefeuille et crée une transaction."""
+        if self.balance < amount:
+            raise ValueError("Solde insuffisant.")
+        with transaction.atomic():
+            self.balance -= amount
+            self.save()
+            Transaction.objects.create(wallet=self, amount=-amount, description=description)
 
 
 class Transaction(models.Model):

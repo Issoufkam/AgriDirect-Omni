@@ -10,6 +10,7 @@ urlpatterns = [
     # UI Auth
     path("login/", TemplateView.as_view(template_name="accounts/login.html"), name="login_ui"),
     path("signup/", TemplateView.as_view(template_name="accounts/signup.html"), name="signup_ui"),
+    path("profile/", views.ProfileUIView.as_view(), name="profile_ui"),
     
     # API Auth (SimpleJWT)
     path("api/login/", csrf_exempt(TokenObtainPairView.as_view()), name="token_obtain_pair"),
@@ -22,6 +23,7 @@ urlpatterns = [
     
     path("api/profile/", views.ProfileView.as_view(), name="profile"),
     path("api/wallet/", views.WalletView.as_view(), name="wallet-api"),
+    path("api/wallet/recharge/", views.WalletDepositView.as_view(), name="wallet-recharge"),
     path("api/user/wallet/", views.WalletView.as_view(), name="wallet-api-mobile"),
     path(
         "driver/location/",

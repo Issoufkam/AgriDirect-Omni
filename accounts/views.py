@@ -1,9 +1,11 @@
 """
 Vues API pour l'application Accounts.
 
-Gère l'inscription, le profil et la localisation des livreurs.
+Gère l'inscription, le profil, la localisation des livreurs et le portefeuille.
 """
 
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import TemplateView
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +15,7 @@ from .serializers import (
     UserProfileSerializer,
     UserRegistrationSerializer,
     WalletSerializer,
+    WalletDepositSerializer,
 )
 from .models import Wallet
 
@@ -20,11 +23,8 @@ from .models import Wallet
 class RegisterView(generics.CreateAPIView):
     """
     POST /api/register/
-
     Inscrit un nouvel utilisateur (Producteur, Client ou Livreur).
-    Accessible sans authentification.
     """
-
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -32,40 +32,23 @@ class RegisterView(generics.CreateAPIView):
 class ProfileView(generics.RetrieveUpdateAPIView):
     """
     GET/PATCH /api/profile/
-
     Récupère ou met à jour le profil de l'utilisateur connecté.
     """
-
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        """Retourne l'utilisateur actuellement authentifié."""
         return self.request.user
 
 
 class UpdateDriverLocationView(APIView):
     """
     POST /api/driver/location/
-
     Met à jour la position GPS du livreur en temps réel.
-    Réservé aux utilisateurs avec rôle LIVREUR.
     """
-
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        """
-        Met à jour la position du livreur.
-
-        Body:
-            longitude (float): Longitude GPS.
-            latitude (float): Latitude GPS.
-
-        Returns:
-            200: Position mise à jour.
-            403: L'utilisateur n'est pas un livreur.
-        """
         if not request.user.is_livreur:
             return Response(
                 {"detail": "Seuls les livreurs peuvent mettre à jour leur position."},
@@ -94,6 +77,31 @@ class WalletView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # On s'assure que le wallet existe (au cas où le signal aurait échoué ou data ancienne)
         wallet, _ = Wallet.objects.get_or_create(user=self.request.user)
         return wallet
+
+
+class WalletDepositView(APIView):
+    """
+    POST /api/wallet/recharge/
+    Recharge le portefeuille (simulation pour le moment).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = WalletDepositSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        amount = serializer.validated_data['amount']
+        
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        wallet.deposit(amount, f"Recharge via Mobile Money (Simulé)")
+        
+        return Response(WalletSerializer(wallet).data, status=status.HTTP_200_OK)
+
+
+class ProfileUIView(LoginRequiredMixin, TemplateView):
+    """
+    Vue pour afficher et modifier le profil utilisateur sur le web.
+    """
+    template_name = "accounts/profile.html"
+    login_url = "/login/"

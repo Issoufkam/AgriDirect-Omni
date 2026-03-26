@@ -107,3 +107,8 @@ class WalletSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wallet
         fields = ["balance", "transactions"]
+
+
+class WalletDepositSerializer(serializers.Serializer):
+    """Serializer pour le dépôt d'argent (recharge)."""
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=100)

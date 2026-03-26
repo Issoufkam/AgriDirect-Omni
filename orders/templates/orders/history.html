@@ -215,11 +215,12 @@
             const comment = document.getElementById('review-comment').value;
 
             try {
-                const response = await fetch('/api/reviews/', {
+                const token = localStorage.getItem('agri_access');
+                const response = await fetch('/api/reviews/create/', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                         order: selectedOrderId,

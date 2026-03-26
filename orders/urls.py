@@ -9,9 +9,9 @@ from . import views
 app_name = "orders"
 
 urlpatterns = [
-    path("orders/", views.OrderCreateView.as_view(), name="order-create"),
-    path("orders/list/", views.OrderListView.as_view(), name="order-list"),
-    path("orders/<int:pk>/cancel/", views.OrderCancelView.as_view(), name="order-cancel"),
+    path("api/orders/", views.OrderCreateView.as_view(), name="order-create"),
+    path("api/orders/list/", views.OrderListView.as_view(), name="order-list"),
+    path("api/orders/<int:pk>/cancel/", views.OrderCancelView.as_view(), name="order-cancel"),
     path("api/producer/orders/", views.ProducerOrderListView.as_view(), name="producer-orders"),
     
     # UI Historique (Client)

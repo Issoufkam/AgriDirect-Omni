@@ -104,9 +104,22 @@ class MobileMoneyService:
             logger.warning(f"Cannot release escrow for order {order.id} with status {order.payment_status}")
             return False
 
-        # Dans un cas réel, requête au fournisseur pour transférer les fonds au compte producteur/livreur
-        # Simulation d'un transfert réussi
-        logger.info(f"Funds for order {order.id} released to Producer and Driver.")
+        from accounts.models import Wallet
+
+        # 1. Créditer le Producteur (Montant du produit)
+        producer_wallet, _ = Wallet.objects.get_or_create(user=order.stock.producer)
+        producer_wallet.deposit(order.total_product_amount, f"Vente Commande #{order.id} - {order.product.name}")
+
+        # 2. Créditer le Livreur (Frais de livraison)
+        try:
+            # On récupère le livreur via la livraison liée à l'ordre
+            delivery = order.delivery # Via related_name 'delivery' si défini, sinon faut le chercher
+            driver_wallet, _ = Wallet.objects.get_or_create(user=delivery.driver)
+            driver_wallet.deposit(order.delivery_fee, f"Livraison Commande #{order.id}")
+        except Exception as e:
+            logger.error(f"Could not credit driver for order {order.id}: {e}")
+
+        logger.info(f"Funds for order {order.id} released to Producer and Driver wallets.")
         
         order.payment_status = Order.PaymentStatus.RELEASED
         order.save(update_fields=["payment_status", "updated_at"])
@@ -114,7 +127,7 @@ class MobileMoneyService:
         # ── Notification SMS au Producteur (Paiement versé) ──
         producer_payment_msg = (
             f"AgriDirect: Livraison confirmée pour #{order.id}. "
-            f"Les fonds ont été versés sur votre compte Mobile Money. Merci !"
+            f"Le montant de {order.total_product_amount} FCFA a été versé sur votre compte. Merci !"
         )
         send_sms(str(order.producer.phone_number), producer_payment_msg)
 
