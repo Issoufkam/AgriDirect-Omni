@@ -5,6 +5,7 @@ Définit les produits agricoles et les stocks des producteurs.
 Compatible PostGIS (production) et SQLite (développement).
 """
 
+from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
@@ -191,6 +192,6 @@ class Stock(models.Model):
         """
         base_price = self.product.national_price
         if self.dynamic_discount > 0:
-            discount_amount = base_price * self.dynamic_discount
+            discount_amount = base_price * Decimal(str(self.dynamic_discount))
             return (base_price - discount_amount).quantize(base_price)
         return base_price

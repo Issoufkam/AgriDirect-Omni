@@ -24,3 +24,6 @@ DATABASES = {
 INSTALLED_APPS = [  # noqa: F405
     app for app in INSTALLED_APPS if app != "django.contrib.gis"
 ]
+
+# Config pour les tests unitaires locaux
+CELERY_TASK_ALWAYS_EAGER = True

@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from django.views.generic import TemplateView
 from .models import Product, Stock
+from .permissions import IsProducteur
 from .serializers import MarketplaceItemSerializer, ProductSerializer, StockSerializer
 from .services import get_marketplace_stocks
 
@@ -92,7 +93,7 @@ class StockCreateView(generics.CreateAPIView):
     Permet à un producteur de publier un nouveau stock.
     """
     serializer_class = StockSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsProducteur]
 
     def perform_create(self, serializer):
         # On force le producteur à être l'utilisateur connecté
