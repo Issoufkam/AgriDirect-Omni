@@ -211,9 +211,10 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:3000,http://localhost:8080",
+    default="http://localhost:3000,http://localhost:8080,http://localhost:8081,http://127.0.0.1:8081,https://agridirect-pro-v1.web.app",
     cast=Csv(),
 )
+CORS_ALLOW_CREDENTIALS = True
 
 # ==============================================================================
 # CELERY (Tasks asynchrones)
