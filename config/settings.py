@@ -22,7 +22,9 @@ SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost", cast=Csv())
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
+# Always allow Render's domain automatically
+ALLOWED_HOSTS += ["agridirect-omni.onrender.com", ".onrender.com"]
 
 # ==============================================================================
 # APPLICATION DEFINITION
@@ -103,15 +105,22 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE (PostgreSQL + PostGIS)
 # ==============================================================================
 
-DATABASES = {
-    "default": config(
-        "DATABASE_URL",
-        default=f"postgis://{config('DB_USER', 'postgres')}:{config('DB_PASSWORD', 'postgres')}@{config('DB_HOST', 'localhost')}:{config('DB_PORT', '5432')}/{config('DB_NAME', 'agridirect_db')}",
-        cast=dj_database_url.parse
-    )
-}
-# S'assurer que l'engine est bien postgis pour la prod
-DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
+# En production (DATABASE_URL fourni par Render), on utilise PostgreSQL/PostGIS.
+# En développement local, on tombe sur SQLite par défaut.
+_DATABASE_URL = config("DATABASE_URL", default="")
+
+if _DATABASE_URL:
+    # Production : PostgreSQL + PostGIS sur Render
+    DATABASES = {"default": dj_database_url.parse(_DATABASE_URL)}
+    DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
+else:
+    # Développement local : SQLite (pas besoin de PostGIS)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # ==============================================================================
 # AUTHENTICATION
