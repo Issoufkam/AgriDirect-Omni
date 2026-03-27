@@ -59,6 +59,11 @@ class OrderSerializer(serializers.ModelSerializer):
     product_image = serializers.SerializerMethodField()
     delivery = serializers.SerializerMethodField()
 
+    producer_lat = serializers.FloatField(source="stock.location_lat", read_only=True)
+    producer_lng = serializers.FloatField(source="stock.location_lng", read_only=True)
+    client_lat = serializers.FloatField(source="client_location_lat", read_only=True)
+    client_lng = serializers.FloatField(source="client_location_lng", read_only=True)
+
     def get_delivery(self, obj):
         from deliveries.serializers import SimpleDeliverySerializer
         try:
@@ -95,6 +100,10 @@ class OrderSerializer(serializers.ModelSerializer):
             "transaction_id",
             "payment_provider",
             "delivery_address",
+            "producer_lat",
+            "producer_lng",
+            "client_lat",
+            "client_lng",
             "created_at",
             "updated_at",
         ]

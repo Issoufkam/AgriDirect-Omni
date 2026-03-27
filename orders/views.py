@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
+from .models import Order
 from .serializers import OrderCreateSerializer, OrderSerializer
 from .services import cancel_order, create_order
 

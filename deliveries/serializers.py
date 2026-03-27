@@ -54,6 +54,9 @@ class SimpleDeliverySerializer(serializers.ModelSerializer):
     driver_name = serializers.CharField(source="driver.get_full_name", read_only=True)
     driver_phone = serializers.CharField(source="driver.phone_number", read_only=True)
 
+    driver_lat = serializers.FloatField(source="driver.current_location_lat", read_only=True)
+    driver_lng = serializers.FloatField(source="driver.current_location_lng", read_only=True)
+
     class Meta:
         model = Delivery
-        fields = ["id", "status", "driver_name", "driver_phone"]
+        fields = ["id", "status", "driver_name", "driver_phone", "pickup_otp", "delivery_otp", "driver_lat", "driver_lng"]

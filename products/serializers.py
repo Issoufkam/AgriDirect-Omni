@@ -70,6 +70,9 @@ class StockSerializer(serializers.ModelSerializer):
     product_detail = ProductSerializer(source="product", read_only=True)
     producer_name = serializers.CharField(source="producer.get_full_name", read_only=True)
     producer_phone = serializers.CharField(source="producer.phone_number", read_only=True)
+    image = serializers.ImageField(required=False, allow_null=True)
+    description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    price_override = serializers.DecimalField(max_digits=10, decimal_places=0, required=False, allow_null=True)
 
     class Meta:
         model = Stock
@@ -80,10 +83,39 @@ class StockSerializer(serializers.ModelSerializer):
             "product",
             "product_detail",
             "quantity",
+            "unit",
             "remaining_quantity",
+            "reserved_quantity",
+            "available_quantity",
+            "variety",
+            "grade",
+            "description",
+            "price_override",
+            "image",
             "location_lat",
             "location_lng",
             "needs_refrigeration",
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
+
+    def validate_price_override(self, value):
+        """Permet de convertir une chaîne vide en None."""
+        if value == "":
+            return None
+        return value
+
+    def validate(self, data):
+        """Vérifie que le prix personnalisé ne dépasse pas le prix de référence national."""
+        product = data.get("product")
+        price_override = data.get("price_override")
+
+        if product and price_override:
+            # S'assurer que price_override est un Decimal pour la comparaison
+            from decimal import Decimal
+            price_override = Decimal(str(price_override))
+            if price_override > product.national_price:
+                raise serializers.ValidationError(
+                    {"price_override": f"Le prix ne peut pas dépasser le prix de référence national ({product.national_price} FCFA)."}
+                )
+        return data

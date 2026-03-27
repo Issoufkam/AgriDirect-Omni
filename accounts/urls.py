@@ -24,7 +24,9 @@ urlpatterns = [
     path("api/profile/", views.ProfileView.as_view(), name="profile"),
     path("api/wallet/", views.WalletView.as_view(), name="wallet-api"),
     path("api/wallet/recharge/", views.WalletDepositView.as_view(), name="wallet-recharge"),
+    path("api/wallet/withdraw/", views.WalletWithdrawView.as_view(), name="wallet-withdraw"),
     path("api/user/wallet/", views.WalletView.as_view(), name="wallet-api-mobile"),
+    path("api/user/push-token/", views.UpdatePushTokenView.as_view(), name="push-token-mobile"),
     path(
         "driver/location/",
         views.UpdateDriverLocationView.as_view(),

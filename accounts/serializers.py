@@ -112,3 +112,8 @@ class WalletSerializer(serializers.ModelSerializer):
 class WalletDepositSerializer(serializers.Serializer):
     """Serializer pour le dépôt d'argent (recharge)."""
     amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=100)
+
+class WalletWithdrawSerializer(serializers.Serializer):
+    """Serializer pour le retrait d'argent (Mobile Money)."""
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=100)
+    phone_number = serializers.CharField(max_length=20)

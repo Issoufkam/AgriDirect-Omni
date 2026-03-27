@@ -22,6 +22,6 @@ class DeliveryAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["status"]
-    search_fields = ["driver__phone_number", "otp_code"]
+    search_fields = ["driver__phone_number", "pickup_otp", "delivery_otp"]
     raw_id_fields = ["order", "driver"]
-    readonly_fields = ["otp_code", "created_at", "updated_at"]
+    readonly_fields = ["pickup_otp", "delivery_otp", "created_at", "updated_at"]

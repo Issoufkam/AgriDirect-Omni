@@ -13,12 +13,13 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .models import Delivery
+from orders.models import Order
 from .serializers import (
     DeliverySerializer,
     DeliveryUpdateSerializer,
     DriverDeliveryListSerializer,
 )
-from .services import update_delivery_status
+from .services import update_delivery_status, report_dispute
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,7 @@ class DeliveryUpdateView(APIView):
                 delivery=delivery,
                 new_status=serializer.validated_data["status"],
                 otp_code=serializer.validated_data.get("otp_code"),
+                driver_instance=request.user,
             )
         except ValueError as e:
             return Response(
@@ -161,6 +163,33 @@ class DriverDeliveryListView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class DisputeView(APIView):
+    """
+    POST /api/orders/{id}/dispute/
+    Signale un litige sur une commande.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            order = Order.objects.select_related('stock__producer').get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({"detail": "Commande introuvable."}, status=status.HTTP_404_NOT_FOUND)
+
+        user = request.user
+        # Vérifier si l'utilisateur est impliqué
+        is_involved = user == order.client or user == order.stock.producer
+        if not is_involved and hasattr(order, 'delivery'):
+             is_involved = user == order.delivery.driver
+
+        if not is_involved:
+            return Response({"detail": "Non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+
+        reason = request.data.get("reason", "Inconnue")
+        report_dispute(order, reason, user)
+        return Response({"detail": "Litige signalé."}, status=status.HTTP_200_OK)
 
 
 class DeliveryUIView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):

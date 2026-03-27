@@ -95,6 +95,47 @@ class StockCreateView(generics.CreateAPIView):
     serializer_class = StockSerializer
     permission_classes = [permissions.IsAuthenticated, IsProducteur]
 
+    def create(self, request, *args, **kwargs):
+        from django.db import IntegrityError
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Validation Error creating stock: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError:
+            return Response(
+                {"detail": "Vous avez déjà un stock actif pour ce produit. Veuillez modifier le stock existant au lieu d'en créer un nouveau."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def perform_create(self, serializer):
         # On force le producteur à être l'utilisateur connecté
         serializer.save(producer=self.request.user)
+
+
+class StockListView(generics.ListAPIView):
+    """
+    GET /api/producer/stocks/
+    Liste les stocks appartenant au producteur connecté.
+    """
+    serializer_class = StockSerializer
+    permission_classes = [permissions.IsAuthenticated, IsProducteur]
+
+    def get_queryset(self):
+        return Stock.objects.filter(producer=self.request.user).order_by('-created_at')
+
+
+class StockDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET, PUT, PATCH, DELETE /api/stocks/<id>/
+    Permet au producteur de lire, modifier ou supprimer un de ses stocks.
+    """
+    serializer_class = StockSerializer
+    permission_classes = [permissions.IsAuthenticated, IsProducteur]
+
+    def get_queryset(self):
+        return Stock.objects.filter(producer=self.request.user)

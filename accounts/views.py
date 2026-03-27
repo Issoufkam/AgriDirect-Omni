@@ -99,9 +99,49 @@ class WalletDepositView(APIView):
         return Response(WalletSerializer(wallet).data, status=status.HTTP_200_OK)
 
 
+class WalletWithdrawView(APIView):
+    """
+    POST /api/wallet/withdraw/
+    Retire des fonds (vers Mobile Money).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from .serializers import WalletWithdrawSerializer
+        serializer = WalletWithdrawSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        amount = serializer.validated_data['amount']
+        phone_number = serializer.validated_data['phone_number']
+        
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        
+        try:
+            wallet.withdraw(amount, f"Retrait Mobile Money vers {phone_number}")
+            return Response(WalletSerializer(wallet).data, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class ProfileUIView(LoginRequiredMixin, TemplateView):
     """
     Vue pour afficher et modifier le profil utilisateur sur le web.
     """
     template_name = "accounts/profile.html"
     login_url = "/login/"
+
+
+class UpdatePushTokenView(APIView):
+    """
+    POST /api/user/push-token/
+    Mettre à jour le jeton Expo Push pour l'utilisateur.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get("expo_push_token")
+        if not token:
+            return Response({"detail": "Le jeton est requis."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        request.user.expo_push_token = token
+        request.user.save(update_fields=["expo_push_token"])
+        return Response({"detail": "Jeton enregistré."}, status=status.HTTP_200_OK)

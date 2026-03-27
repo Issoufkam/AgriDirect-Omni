@@ -104,6 +104,15 @@ class CustomUser(AbstractUser):
         null=True,
         blank=True,
     )
+    
+    # ── Notifications ──
+    expo_push_token = models.CharField(
+        "Jeton Expo Push",
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Jeton utilisé pour envoyer des notifications push vers l'appareil mobile.",
+    )
 
     # ── Auth settings ──
     USERNAME_FIELD = "phone_number"

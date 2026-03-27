@@ -32,6 +32,7 @@ class Order(models.Model):
         PICKED_UP = "PICKED_UP", "Récupérée"
         DELIVERED = "DELIVERED", "Livrée"
         CANCELLED = "CANCELLED", "Annulée"
+        DISPUTED = "DISPUTED", "Litige en cours"
 
     class PaymentStatus(models.TextChoices):
         UNPAID = "UNPAID", "Non payé"

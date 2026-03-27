@@ -9,6 +9,7 @@ import logging
 from celery import shared_task
 
 from .services import SMSParseError, process_stock_sms, send_sms
+from .notifications import send_push_notification
 
 logger = logging.getLogger("sms_gateway")
 
@@ -101,6 +102,14 @@ def notify_order_created_task(order_id: int):
         f"Montant: {order.total_product_amount} FCFA."
     )
     send_sms(order.stock.producer.phone_number, producer_msg)
+    
+    # Push au producteur
+    if order.stock.producer.expo_push_token:
+        send_push_notification(
+            order.stock.producer.expo_push_token, 
+            producer_msg,
+            {"order_id": order.id, "type": "NEW_ORDER"}
+        )
 
     # Notification au client
     client_msg = (
@@ -110,6 +119,14 @@ def notify_order_created_task(order_id: int):
         f"Un livreur sera bientôt assigné."
     )
     send_sms(order.client.phone_number, client_msg)
+
+    # Push au client
+    if order.client.expo_push_token:
+        send_push_notification(
+            order.client.expo_push_token, 
+            client_msg,
+            {"order_id": order.id, "type": "ORDER_CONFIRMED"}
+        )
 
     logger.info("Notifications envoyées pour commande #%d.", order.pk)
 
@@ -140,6 +157,14 @@ def notify_delivery_assigned_task(delivery_id: int):
         f"NE DONNEZ ce code qu'au livreur à la réception."
     )
     send_sms(delivery.order.client.phone_number, client_msg)
+    
+    # Push au client
+    if delivery.order.client.expo_push_token:
+        send_push_notification(
+            delivery.order.client.expo_push_token,
+            client_msg,
+            {"delivery_id": delivery.id, "type": "DRIVER_ASSIGNED"}
+        )
 
     # Notification au livreur
     driver_msg = (

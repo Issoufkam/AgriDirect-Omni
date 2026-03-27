@@ -57,10 +57,16 @@ class Delivery(models.Model):
         help_text="Part des frais de livraison revenant au livreur.",
     )
 
-    otp_code = models.CharField(
-        "code OTP",
+    pickup_otp = models.CharField(
+        "code OTP Ramassage",
         max_length=6,
-        help_text="Code secret à 6 chiffres pour valider la fin de course.",
+        help_text="Code à donner au livreur par le PRODUCTEUR lors de la collecte.",
+    )
+    
+    delivery_otp = models.CharField(
+        "code OTP Livraison",
+        max_length=6,
+        help_text="Code à donner au livreur par le CLIENT lors de la remise du colis.",
     )
 
     pickup_time = models.DateTimeField(
@@ -90,9 +96,11 @@ class Delivery(models.Model):
         )
 
     def save(self, *args, **kwargs):
-        """Génère automatiquement un code OTP à la création."""
-        if not self.otp_code:
-            self.otp_code = self.generate_otp()
+        """Génère les codes OTP à la création."""
+        if not self.pickup_otp:
+            self.pickup_otp = self.generate_otp()
+        if not self.delivery_otp:
+            self.delivery_otp = self.generate_otp()
         super().save(*args, **kwargs)
 
     @staticmethod

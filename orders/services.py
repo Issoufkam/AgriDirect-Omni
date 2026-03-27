@@ -86,9 +86,9 @@ def create_order(
 
     quantity_decimal = Decimal(str(quantity))
 
-    if stock.remaining_quantity < quantity_decimal:
+    if stock.available_quantity < quantity_decimal:
         raise ValueError(
-            f"Stock insuffisant. Disponible: {stock.remaining_quantity} "
+            f"Stock insuffisant. Disponible (non réservé): {stock.available_quantity} "
             f"{stock.product.get_unit_display()}, demandé: {quantity_decimal}."
         )
 
@@ -126,9 +126,9 @@ def create_order(
         payment_status=Order.PaymentStatus.UNPAID,
     )
 
-    # ── 7. Décrémentation du stock ──
-    stock.remaining_quantity -= quantity_decimal
-    stock.save(update_fields=["remaining_quantity", "updated_at"])
+    # ── 7. Réservation du stock (Bloqué temporairement) ──
+    stock.reserved_quantity += quantity_decimal
+    stock.save(update_fields=["reserved_quantity", "updated_at"])
 
     # ── 8. ALERTE STOCK BAS (Relance SMS) ──
     if stock.remaining_quantity <= 10:
@@ -177,10 +177,10 @@ def cancel_order(order: Order) -> Order:
         )
 
     with transaction.atomic():
-        # Restituer le stock
+        # Libérer la réservation
         stock = Stock.objects.select_for_update().get(pk=order.stock_id)
-        stock.remaining_quantity += order.quantity
-        stock.save(update_fields=["remaining_quantity", "updated_at"])
+        stock.reserved_quantity = max(0, stock.reserved_quantity - order.quantity)
+        stock.save(update_fields=["reserved_quantity", "updated_at"])
 
         # Mettre à jour le statut
         order.status = Order.Status.CANCELLED

@@ -132,11 +132,12 @@ def assign_delivery(order: Order, driver: CustomUser) -> Delivery:
     order.save(update_fields=["status", "updated_at"])
 
     logger.info(
-        "Livraison #%d créée — Commande #%d assignée à %s (OTP: %s).",
+        "Livraison #%d créée — Commande #%d assignée à %s (Pickup OTP: %s, Delivery OTP: %s).",
         delivery.pk,
         order.pk,
         driver.get_full_name(),
-        delivery.otp_code,
+        delivery.pickup_otp,
+        delivery.delivery_otp,
     )
 
     return delivery
@@ -147,6 +148,7 @@ def update_delivery_status(
     delivery: Delivery,
     new_status: str,
     otp_code: str = None,
+    driver_instance: CustomUser = None,
 ) -> Delivery:
     """
     Met à jour le statut d'une livraison.
@@ -189,40 +191,67 @@ def update_delivery_status(
 
     # Gestion des transitions spéciales
     if new_status == Delivery.Status.PICKED_UP:
+        # 1. Validation OTP obligatoire
+        if not otp_code:
+            raise ValueError("Le code OTP du producteur est obligatoire.")
+        if otp_code != delivery.pickup_otp:
+            raise ValueError("Code OTP de ramassage incorrect.")
+
+        # 2. Geofencing : Le livreur doit être chez le producteur
+        if driver_instance and driver_instance.current_location_lat:
+            dist = haversine_distance(
+                delivery.order.stock.location_lat,
+                delivery.order.stock.location_lng,
+                driver_instance.current_location_lat,
+                driver_instance.current_location_lng,
+            )
+            if dist > 0.5: # 500 mètres de tolérance
+                raise ValueError(f"Vous êtes trop loin du producteur ({dist:.2f} km).")
+
         delivery.pickup_time = now
-        # Mettre à jour la commande
-        delivery.order.status = Order.Status.PICKED_UP
-        delivery.order.save(update_fields=["status", "updated_at"])
+        order = delivery.order
+        order.status = Order.Status.PICKED_UP
+        order.save(update_fields=["status", "updated_at"])
+
+        # 3. Mise à jour physique du stock
+        stock = order.stock
+        # On déduit physiquement du stock et on libère la réservation
+        stock.remaining_quantity = max(0, stock.remaining_quantity - order.quantity)
+        stock.reserved_quantity = max(0, stock.reserved_quantity - order.quantity)
+        stock.save(update_fields=["remaining_quantity", "reserved_quantity", "updated_at"])
+        
+        logger.info("Livraison #%d: Ramassage validé. Stock physique mis à jour.", delivery.pk)
 
     elif new_status == Delivery.Status.DELIVERED:
-        # Validation OTP obligatoire
+        # 1. Validation OTP obligatoire
         if not otp_code:
-            raise ValueError("Le code OTP est obligatoire pour finaliser la livraison.")
+            raise ValueError("Le code OTP du client est obligatoire.")
+        if otp_code != delivery.delivery_otp:
+            raise ValueError("Code OTP de livraison incorrect.")
 
-        if otp_code != delivery.otp_code:
-            raise ValueError("Code OTP incorrect.")
+        # 2. Geofencing : Le livreur doit être chez le client
+        if driver_instance and driver_instance.current_location_lat:
+            dist = haversine_distance(
+                delivery.order.client_location_lat,
+                delivery.order.client_location_lng,
+                driver_instance.current_location_lat,
+                driver_instance.current_location_lng,
+            )
+            if dist > 0.5:
+                raise ValueError(f"Vous êtes trop loin du client ({dist:.2f} km).")
 
         delivery.delivery_time = now
-
-        # Libération du séquestre via le service de paiement
         order = delivery.order
         order.status = Order.Status.DELIVERED
         order.save(update_fields=["status", "updated_at"])
-        
+
+        # Libération du séquestre
         from payments.services import MobileMoneyService
         if order.payment_status == Order.PaymentStatus.ESCROWED:
             MobileMoneyService.release_escrow(order)
         elif order.payment_status != Order.PaymentStatus.RELEASED:
             order.payment_status = Order.PaymentStatus.RELEASED
             order.save(update_fields=["payment_status"])
-
-        logger.info(
-            "Livraison #%d terminée — OTP validé — Séquestre libéré pour "
-            "commande #%d (%s FCFA).",
-            delivery.pk,
-            order.pk,
-            order.total_amount,
-        )
 
     delivery.status = new_status
     delivery.save()
@@ -267,3 +296,11 @@ def auto_dispatch_order(order: Order) -> Delivery | None:
     )
 
     return assign_delivery(order, closest_driver)
+
+
+def report_dispute(order: Order, reason: str, reporter: CustomUser):
+    """Signale un litige sur une commande et gèle le paiement."""
+    order.status = Order.Status.DISPUTED
+    order.save()
+    logger.warning(f"LITIGE sur commande #{order.pk} par {reporter.get_full_name()}: {reason}")
+    # Ici on pourrait notifier l'admin par SMS/Email

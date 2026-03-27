@@ -3,7 +3,8 @@ from .views import (
     DeliveryUpdateView, 
     DeliveryDetailView, 
     DriverDeliveryListView,
-    DeliveryUIView
+    DeliveryUIView,
+    DisputeView
 )
 
 app_name = "deliveries"
@@ -16,4 +17,5 @@ urlpatterns = [
     path("api/deliveries/", DriverDeliveryListView.as_view(), name="delivery_list"),
     path("api/deliveries/<int:pk>/", DeliveryUpdateView.as_view(), name="delivery_update"),
     path("api/deliveries-detail/<int:pk>/", DeliveryDetailView.as_view(), name="delivery_detail"),
+    path("api/orders/<int:pk>/dispute/", DisputeView.as_view(), name="order_dispute"),
 ]

@@ -265,6 +265,60 @@ class SMSInboundSimulatorView(generics.GenericAPIView):
             return Response({"error": str(e)}, status=400)
 
 
+class ProducerDashboardStatsView(generics.GenericAPIView):
+    """
+    Retourne les statistiques spécifiques à un PRODUCTEUR.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.role == CustomUser.Role.PRODUCTEUR:
+            return Response({"detail": "Accessible uniquement aux producteurs."}, status=403)
+        
+        user = request.user
+        
+        # 1. KPIs Stocks
+        stocks = Stock.objects.filter(producer=user)
+        total_stocks = stocks.count()
+        active_stocks = stocks.filter(remaining_quantity__gt=0).count()
+        sold_out_stocks = stocks.filter(remaining_quantity=0).count()
+
+        # 2. KPIs Commandes (liées à ses stocks)
+        orders = Order.objects.filter(stock__producer=user)
+        total_orders = orders.count()
+        delivered_orders = orders.filter(status=Order.Status.DELIVERED).count()
+        pending_orders = orders.filter(status__in=[Order.Status.PENDING, Order.Status.ASSIGNED]).count()
+
+        # 3. KPIs Financiers
+        total_revenue = orders.filter(status=Order.Status.DELIVERED).aggregate(Sum('total_product_amount'))['total_product_amount__sum'] or 0
+        
+        # 4. Évolution (Simulée pour le frontend: 30 derniers jours)
+        # On pourrait faire un vrai count par date ici
+        
+        data = {
+            "inventory": {
+                "total": total_stocks,
+                "active": active_stocks,
+                "sold_out": sold_out_stocks
+            },
+            "orders": {
+                "total": total_orders,
+                "delivered": delivered_orders,
+                "pending": pending_orders
+            },
+            "finance": {
+                "total_revenue": total_revenue,
+                "currency": "FCFA"
+            },
+            "performance": {
+                "rating": user.average_rating,
+                "trust_score": 95 # Simulation
+            }
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class DashboardUIView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """
     Vue pour afficher l'interface graphique du tableau de bord.
