@@ -27,7 +27,7 @@ urlpatterns = [
     path("", include("products.urls")),
     path("", include("orders.urls")),
     path("", include("deliveries.urls")),
-    path("", include("dashboard.urls")),
+    path("dashboard/", include("dashboard.urls")),
 
     # ── Autres Services API (REST uniquement, donc on peut préfixer par api/) ──
     path("api/payments/", include("payments.urls")),
