@@ -691,7 +691,7 @@
         async function fetchDashboardData() {
             try {
                 // Point to our Django API endpoint
-                const response = await fetch('/dashboard/stats/');
+                const response = await fetch('/dashboard/api/dashboard/stats/');
                 if (!response.ok) throw new Error("Erreur réseau");
                 
                 const data = await response.json();
@@ -824,7 +824,7 @@
             if (!logisticsMap) return;
 
             try {
-                const response = await fetch('/dashboard/map/');
+                const response = await fetch('/dashboard/api/dashboard/map/');
                 const data = await response.json();
                 
                 mapLayerGroup.clearLayers();
@@ -881,7 +881,7 @@
             body.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-muted);">Chargement des transactions...</td></tr>';
             
             try {
-                const response = await fetch('/dashboard/transactions/');
+                const response = await fetch('/dashboard/api/dashboard/transactions/');
                 const data = await response.json();
                 
                 if (data.length === 0) {
@@ -942,7 +942,7 @@
             const body = document.getElementById('user-body');
             body.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 40px; color: var(--text-muted);">Chargement...</td></tr>';
             
-            let url = '/dashboard/users/';
+            let url = '/dashboard/api/dashboard/users/';
             if (role) url += `?role=${role}`;
 
             try {
@@ -982,7 +982,7 @@
 
         async function fetchAnalytics() {
             try {
-                const response = await fetch('/dashboard/analytics/');
+                const response = await fetch('/dashboard/api/dashboard/analytics/');
                 const data = await response.json();
                 
                 renderPagesChart(data.top_paths);
@@ -1026,7 +1026,7 @@
             alert(`Simulation de l'envoi du SMS : "${randomMsg}"`);
             
             try {
-                const response = await fetch('/dashboard/simulate-sms/', {
+                const response = await fetch('/dashboard/api/dashboard/simulate-sms/', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
